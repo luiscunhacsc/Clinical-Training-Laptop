@@ -1,0 +1,2063 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modelo Neurocognitivo - Estudo e Teste</title>
+  <style>
+    :root {
+      --bg-a: #f1f8f7;
+      --bg-b: #eef2f6;
+      --surface: #ffffff;
+      --line: #cfdae2;
+      --text: #16202b;
+      --muted: #4b6073;
+      --accent: #0d7f67;
+      --accent-strong: #0a6a56;
+      --accent-soft: #dcf4ed;
+      --accent-outline: rgba(13, 127, 103, 0.22);
+      --attention: #ee9b21;
+      --slot-empty: rgba(255, 255, 255, 0.9);
+      --panel-shadow: 0 10px 30px rgba(18, 39, 58, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Aptos", "Segoe UI", "Trebuchet MS", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 10% 8%, #ebf7f0 0%, var(--bg-a) 40%, var(--bg-b) 100%);
+      overflow: hidden;
+    }
+
+    body[data-mode="teste"] {
+      --accent: #1e6ea0;
+      --accent-strong: #125278;
+      --accent-soft: #ddeefe;
+      --accent-outline: rgba(30, 110, 160, 0.24);
+    }
+
+    .app {
+      max-width: 1800px;
+      margin: 0 auto;
+      height: 100vh;
+      padding: clamp(6px, 0.9vw, 12px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: clamp(6px, 0.9vh, 10px);
+    }
+
+    .header {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: clamp(7px, 0.7vw, 10px);
+      box-shadow: var(--panel-shadow);
+      display: grid;
+      gap: 6px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .header-brand {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 0.64rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #426579;
+      font-weight: 700;
+    }
+
+    .title {
+      font-size: clamp(1rem, 1.25vw, 1.26rem);
+      margin: 2px 0 0;
+      letter-spacing: 0.3px;
+      line-height: 1.1;
+    }
+
+    .hint {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: clamp(0.74rem, 0.78vw, 0.86rem);
+      line-height: 1.2;
+      max-width: min(100ch, 100%);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .state-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .state-pill {
+      border: 1px solid #cddae6;
+      background: linear-gradient(180deg, #ffffff 0%, #f3f8ff 100%);
+      color: #254760;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.015em;
+      white-space: nowrap;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: minmax(210px, 0.95fr) minmax(360px, 1.5fr) minmax(220px, 1fr) auto;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .control-block {
+      border: 1px solid #d4e0e7;
+      border-radius: 10px;
+      padding: 6px 8px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fcff 100%);
+      display: grid;
+      gap: 5px;
+      min-height: 0;
+    }
+
+    .control-label {
+      margin: 0;
+      font-size: 0.62rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #456275;
+    }
+
+    .mode-block {
+      border-color: var(--accent-outline);
+      background: linear-gradient(160deg, #ffffff 0%, var(--accent-soft) 100%);
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .mode-btn {
+      border: 1px solid #bfd2dc;
+      border-radius: 9px;
+      padding: 5px 7px;
+      background: #fff;
+      color: #214358;
+      font-size: 0.79rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      border-color: var(--accent-strong);
+      color: #fff;
+      box-shadow: 0 8px 18px var(--accent-outline);
+      transform: translateY(-1px);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: #f5fafc;
+      color: var(--text);
+      border-radius: 9px;
+      padding: 5px 7px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+      text-align: left;
+      display: grid;
+      gap: 1px;
+      min-height: 38px;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 8px 18px var(--accent-outline);
+    }
+
+    .tab-title {
+      font-weight: 700;
+      line-height: 1.16;
+    }
+
+    .tab-subtitle {
+      font-size: 0.62rem;
+      opacity: 0.88;
+      line-height: 1.05;
+    }
+
+    .study-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-content: flex-start;
+    }
+
+    .study-filter {
+      border: 1px solid #c7d6e0;
+      background: #f7fbff;
+      color: #2a475b;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .study-filter.active {
+      border-color: var(--accent-strong);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-weight: 700;
+    }
+
+    .action-btn {
+      align-self: stretch;
+      border: 1px solid #d0dce4;
+      background: linear-gradient(180deg, #ffffff 0%, #f6fafc 100%);
+      border-radius: 9px;
+      padding: 6px 10px;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 0.77rem;
+      font-weight: 600;
+      white-space: normal;
+      line-height: 1.1;
+    }
+
+    .action-btn:hover {
+      background: #eef5fb;
+    }
+
+    .action-group {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      align-self: stretch;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: clamp(310px, 33.5vw, 430px) minmax(0, 1fr);
+      gap: clamp(8px, 0.95vw, 12px);
+      align-items: stretch;
+      min-height: 0;
+      height: 100%;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--panel-shadow);
+      min-height: 0;
+    }
+
+    .side-panel {
+      padding: clamp(10px, 1vw, 14px);
+      overflow: auto;
+      overscroll-behavior: contain;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 2px;
+    }
+
+    .side-title {
+      margin: 0;
+      font-size: 0.98rem;
+    }
+
+    .side-meta {
+      margin: 4px 0 10px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .pool {
+      min-height: 120px;
+      border: 2px dashed #bad0de;
+      border-radius: 12px;
+      padding: 9px;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 6px;
+      background: linear-gradient(140deg, #fbfdff, #f4f8fc);
+    }
+
+    .pool.drag-over {
+      border-color: #72808d;
+      background: #f1f3f5;
+    }
+
+    .study-groups {
+      display: grid;
+      gap: 10px;
+    }
+
+    .study-group {
+      border: 1px solid #d5e1e8;
+      border-radius: 10px;
+      padding: 7px;
+      background: #fafdff;
+    }
+
+    .study-group h3 {
+      margin: 0 0 5px;
+      font-size: 0.8rem;
+      color: #36586d;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+
+    .study-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 5px;
+    }
+
+    .study-term-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #c9d8e2;
+      background: #fff;
+      border-radius: 8px;
+      padding: 5px 7px;
+      color: #1f3445;
+      cursor: pointer;
+      font-size: 0.8rem;
+      line-height: 1.2;
+    }
+
+    .study-term-btn.active {
+      border-color: #c8862b;
+      background: #fff8ea;
+      box-shadow: 0 0 0 2px rgba(200, 134, 43, 0.22);
+    }
+
+    .model-panel {
+      min-width: 0;
+      padding: clamp(8px, 0.9vw, 14px);
+      overflow: hidden;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 10% 14%, rgba(229, 242, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 34%, transparent 52%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+    }
+
+    .model-surface {
+      width: 100%;
+      max-width: none;
+      max-height: 100%;
+      aspect-ratio: 6 / 5;
+      position: relative;
+      background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDEwMDAiIHN0eWxlPSJiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsiPgogIDxkZWZzPgogICAgPCEtLSBTb2xpZCBhcnJvd2hlYWQgLS0+CiAgICA8bWFya2VyIGlkPSJhcnJvdyIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSI4IiByZWZZPSI1IiBtYXJrZXJXaWR0aD0iNiIgbWFya2VySGVpZ2h0PSI2IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+CiAgICAgIDxwYXRoIGQ9Ik0gMCAwIEwgMTAgNSBMIDAgMTAgeiIgZmlsbD0iYmxhY2siIC8+CiAgICA8L21hcmtlcj4KICAgIDwhLS0gVGhpY2tlciBzb2xpZCBhcnJvd2hlYWQgLS0+CiAgICA8bWFya2VyIGlkPSJhcnJvdy10aGljayIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSI4IiByZWZZPSI1IiBtYXJrZXJXaWR0aD0iNiIgbWFya2VySGVpZ2h0PSI2IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+CiAgICAgIDxwYXRoIGQ9Ik0gMCAwIEwgMTAgNSBMIDAgMTAgeiIgZmlsbD0iYmxhY2siIC8+CiAgICA8L21hcmtlcj4KICA8L2RlZnM+CgogIDxzdHlsZT4KICAgIHJlY3QgewogICAgICBmaWxsOiBub25lOwogICAgICBzdHJva2U6IGJsYWNrOwogICAgICBzdHJva2Utd2lkdGg6IDEuNTsKICAgIH0KICAgIHBhdGguc29saWQgewogICAgICBmaWxsOiBub25lOwogICAgICBzdHJva2U6IGJsYWNrOwogICAgICBzdHJva2Utd2lkdGg6IDM7CiAgICAgIG1hcmtlci1lbmQ6IHVybCgjYXJyb3cpOwogICAgfQogICAgcGF0aC50aGljayB7CiAgICAgIGZpbGw6IG5vbmU7CiAgICAgIHN0cm9rZTogYmxhY2s7CiAgICAgIHN0cm9rZS13aWR0aDogNTsKICAgICAgbWFya2VyLWVuZDogdXJsKCNhcnJvdy10aGljayk7CiAgICB9CiAgICBwYXRoLmRhc2hlZCB7CiAgICAgIGZpbGw6IG5vbmU7CiAgICAgIHN0cm9rZTogYmxhY2s7CiAgICAgIHN0cm9rZS13aWR0aDogNDsKICAgICAgc3Ryb2tlLWRhc2hhcnJheTogMTIgMTI7CiAgICAgIG1hcmtlci1lbmQ6IHVybCgjYXJyb3cpOwogICAgfQogIDwvc3R5bGU+CgogIDwhLS0gQk9YRVMgLS0+CiAgPCEtLSBUb3AgUm93IC0tPgogIDxyZWN0IHg9IjE4NSIgeT0iNzciIHdpZHRoPSIxNzAiIGhlaWdodD0iNjYiIC8+ICA8IS0tIFBhbGF2cmEgRmFsYWRhIC0tPgogIDxyZWN0IHg9Ijg0NSIgeT0iNzciIHdpZHRoPSIxNzAiIGhlaWdodD0iNjYiIC8+ICA8IS0tIFBhbGF2cmEgRXNjcml0YSAtLT4KCiAgPCEtLSBTZWNvbmQgUm93IC0tPgogIDxyZWN0IHg9IjE4NSIgeT0iMTk3IiB3aWR0aD0iMTcwIiBoZWlnaHQ9IjY2IiAvPiA8IS0tIEFuw6FsaXNlIEFjw7pzdGljYSAtLT4KICA8cmVjdCB4PSI4NDUiIHk9IjE5NyIgd2lkdGg9IjE3MCIgaGVpZ2h0PSI2NiIgLz4gPCEtLSBBbsOhbGlzZSBWaXN1YWwgLS0+CgogIDwhLS0gVGhpcmQgUm93IC0tPgogIDxyZWN0IHg9IjY1IiB5PSIzMTciIHdpZHRoPSIxNzAiIGhlaWdodD0iNjYiIC8+ICA8IS0tIENBLUYgLS0+CiAgPHJlY3QgeD0iMzA1IiB5PSIzMTciIHdpZHRoPSIxNzAiIGhlaWdodD0iNjYiIC8+IDwhLS0gTEZFIC0tPgogIDxyZWN0IHg9IjcyNSIgeT0iMzE3IiB3aWR0aD0iMTcwIiBoZWlnaHQ9IjY2IiAvPiA8IS0tIExPRSAtLT4KICA8cmVjdCB4PSI5NjUiIHk9IjMxNyIgd2lkdGg9IjE3MCIgaGVpZ2h0PSI2NiIgLz4gPCEtLSBDRy1GIC0tPgoKICA8IS0tIEZvdXJ0aCBSb3cgLS0+CiAgPHJlY3QgeD0iNDkzIiB5PSI0MTYiIHdpZHRoPSIyMTQiIGhlaWdodD0iODgiIC8+IDwhLS0gU2lzdGVtYSBTZW3Dom50aWNvIC0tPgoKICA8IS0tIEZpZnRoIFJvdyAtLT4KICA8cmVjdCB4PSIzMDUiIHk9IjU5NyIgd2lkdGg9IjE3MCIgaGVpZ2h0PSI2NiIgLz4gPCEtLSBMRlMgLS0+CiAgPHJlY3QgeD0iNzI1IiB5PSI1OTciIHdpZHRoPSIxNzAiIGhlaWdodD0iNjYiIC8+IDwhLS0gTE9TIC0tPgoKICA8IS0tIFNpeHRoIFJvdyAtLT4KICA8cmVjdCB4PSIyMTMiIHk9Ijc1NyIgd2lkdGg9IjIxNCIgaGVpZ2h0PSI2NiIgLz4gPCEtLSBCdWZmZXIgRm9uw6ltaWNvIC0tPgogIDxyZWN0IHg9IjUxNSIgeT0iNzU3IiB3aWR0aD0iMTcwIiBoZWlnaHQ9IjY2IiAvPiA8IS0tIENvbnZlcnPDo28gRm9uZW1hLUdyYWZlbWEgLS0+CiAgPHJlY3QgeD0iNzczIiB5PSI3NTciIHdpZHRoPSIyMTQiIGhlaWdodD0iNjYiIC8+IDwhLS0gQnVmZmVyIEdyYWbDqW1pY28gLS0+CgogIDwhLS0gU2V2ZW50aCBSb3cgLS0+CiAgPHJlY3QgeD0iMTg1IiB5PSI4OTciIHdpZHRoPSIxNzAiIGhlaWdodD0iNjYiIC8+IDwhLS0gRmFsYSAtLT4KICA8cmVjdCB4PSI4NDUiIHk9Ijg5NyIgd2lkdGg9IjE3MCIgaGVpZ2h0PSI2NiIgLz4gPCEtLSBFc2NyaXRhIC0tPgoKCiAgPCEtLSBBUlJPV1MgLS0+CgogIDwhLS0gQ29sdW1uIDIgKExlZnQgSW5uZXIpIC0tPgogIDxwYXRoIGNsYXNzPSJzb2xpZCIgZD0iTSAyNzAgMTQwIEwgMjcwIDE5NiIgLz4gPCEtLSBQRiB0byBBQSAtLT4KICA8cGF0aCBjbGFzcz0ic29saWQiIGQ9Ik0gMjMwIDI2MCBMIDE1MCAzMTYiIC8+IDwhLS0gQUEgdG8gQ0EtRiAtLT4KICA8cGF0aCBjbGFzcz0ic29saWQiIGQ9Ik0gMzEwIDI2MCBMIDM5MCAzMTYiIC8+IDwhLS0gQUEgdG8gTEZFIC0tPgoKICA8IS0tIENvbHVtbiA2IChSaWdodCBJbm5lcikgLS0+CiAgPHBhdGggY2xhc3M9InNvbGlkIiBkPSJNIDkzMCAxNDAgTCA5MzAgMTk2IiAvPiA8IS0tIFBFIHRvIEFWIC0tPgogIDxwYXRoIGNsYXNzPSJzb2xpZCIgZD0iTSA4OTAgMjYwIEwgODEwIDMxNiIgLz4gPCEtLSBBViB0byBMT0UgLS0+CiAgPHBhdGggY2xhc3M9InNvbGlkIiBkPSJNIDk3MCAyNjAgTCAxMDUwIDMxNiIgLz4gPCEtLSBBViB0byBDRy1GIC0tPgoKICA8IS0tIENlbnRlciBDcm9zc2luZ3MgLS0+CiAgPHBhdGggY2xhc3M9InRoaWNrIiBkPSJNIDQzMCAzODAgTCA1MjAgNDIwIiAvPiA8IS0tIExGRSB0byBTUyAtLT4KICA8cGF0aCBjbGFzcz0idGhpY2siIGQ9Ik0gNzcwIDM4MCBMIDY4MCA0MjAiIC8+IDwhLS0gTE9FIHRvIFNTIC0tPgogIAogIDxwYXRoIGNsYXNzPSJ0aGljayIgZD0iTSA1MjAgNTAwIEwgNDMwIDU5NiIgLz4gPCEtLSBTUyB0byBMRlMgLS0+CiAgPHBhdGggY2xhc3M9InRoaWNrIiBkPSJNIDY4MCA1MDAgTCA3NzAgNTk2IiAvPiA8IS0tIFNTIHRvIExPUyAtLT4KCiAgPHBhdGggY2xhc3M9InNvbGlkIiBkPSJNIDM5MCAzODAgTCAzOTAgNTk2IiAvPiA8IS0tIExGRSB0byBMRlMgLS0+CiAgPHBhdGggY2xhc3M9InNvbGlkIiBkPSJNIDgxMCAzODAgTCA4MTAgNTk2IiAvPiA8IS0tIExPRSB0byBMT1MgLS0+CgogIDxwYXRoIGNsYXNzPSJ0aGljayIgZD0iTSA0NzAgNjMwIEwgNzI2IDYzMCIgLz4gPCEtLSBMRlMgdG8gTE9TIChIb3Jpem9udGFsIGNyb3NzLW1vZGFsKSAtLT4KCiAgPCEtLSBMb3dlciBvdXRwdXRzIHRvIEJ1ZmZlcnMgLS0+CiAgPCEtLSBGcm9tIENBLUYgLS0+CiAgPHBhdGggY2xhc3M9InNvbGlkIiBkPSJNIDE1MCAzODAgTCAxNTAgNzEwIEwgMjUwIDcxMCBMIDI1MCA3NTYiIC8+IAogIDwhLS0gRnJvbSBDRy1GIChMb25nIExpbmUgaG9yaXpvbnRhbGx5IGFjcm9zcykgLS0+CiAgPHBhdGggY2xhc3M9InNvbGlkIiBkPSJNIDEwNTAgMzgwIEwgMTA1MCA2OTAgTCAzMzAgNjkwIEwgMzMwIDc1NiIgLz4gCiAgPCEtLSBGcm9tIExGUyBzdHJhaWdodCBkb3duIC0tPgogIDxwYXRoIGNsYXNzPSJ0aGljayIgZD0iTSAzOTAgNjYwIEwgMzkwIDc1NiIgLz4gCgogIDwhLS0gRnJvbSBMT1Mgc3RyYWlnaHQgZG93biB0byBCdWZmZXIgRyAtLT4KICA8cGF0aCBjbGFzcz0idGhpY2siIGQ9Ik0gODEwIDY2MCBMIDgxMCA3NTYiIC8+CgogIDwhLS0gQmV0d2VlbiBCdWZmZXJzIChDb252ZXJzw6NvKSAtLT4KICA8cGF0aCBjbGFzcz0idGhpY2siIGQ9Ik0gNDIwIDc5MCBMIDUxNiA3OTAiIC8+IDwhLS0gQnVmZkYgdG8gQ0ZHIC0tPgogIDxwYXRoIGNsYXNzPSJ0aGljayIgZD0iTSA2ODAgNzkwIEwgNzc2IDc5MCIgLz4gPCEtLSBDRkcgdG8gQnVmZkcgLS0+CgogIDwhLS0gRnJvbSBCdWZmZXJzIHRvIE91dHB1dHMgLS0+CiAgPHBhdGggY2xhc3M9InNvbGlkIiBkPSJNIDI3MCA4MjAgTCAyNzAgODk2IiAvPiA8IS0tIEJ1ZmZGIHRvIEZhbGEgLS0+CiAgPHBhdGggY2xhc3M9InNvbGlkIiBkPSJNIDkzMCA4MjAgTCA5MzAgODk2IiAvPiA8IS0tIEJ1ZmZHIHRvIEVzY3JpdGEgLS0+CgoKICA8IS0tIERBU0hFRCBGRUVEQkFDSyBMSU5FUyAtLT4KICA8cGF0aCBjbGFzcz0iZGFzaGVkIiBkPSJNIDE5MCA5MzAgTCAxMCA5MzAgTCAxMCAxMTAgTCAxODYgMTEwIiAvPiA8IS0tIEZhbGEgdG8gUEYgLS0+CiAgPHBhdGggY2xhc3M9ImRhc2hlZCIgZD0iTSAyMjAgNzkwIEwgNDAgNzkwIEwgNDAgMjMwIEwgMTg2IDIzMCIgLz4gPCEtLSBCdWZmRiB0byBBQSAtLT4KICAKICA8cGF0aCBjbGFzcz0iZGFzaGVkIiBkPSJNIDEwMTAgOTMwIEwgMTE1MCA5MzAgTCAxMTUwIDExMCBMIDEwMTQgMTEwIiAvPiA8IS0tIEVzY3JpdGEgdG8gUEUgLS0+Cgo8L3N2Zz4K");
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position: center;
+      border-radius: 14px;
+      border: 1px solid #d5e1ea;
+      background-color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(213, 225, 234, 0.45);
+      flex: 0 0 auto;
+    }
+
+    .drop-slot {
+      position: absolute;
+      border: 2px dashed #adbbc7;
+      border-radius: 9px;
+      background: var(--slot-empty);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .drop-slot.drag-over {
+      border-color: #7f8892;
+      background-color: #f1f3f5;
+    }
+
+    .drop-slot::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: 8px;
+      pointer-events: none;
+      border: 1px dashed rgba(86, 94, 105, 0.35);
+    }
+
+    .study-slot {
+      border: 0 !important;
+      background: transparent !important;
+    }
+
+    .study-slot::after {
+      border: 0 !important;
+    }
+
+    .study-slot.is-muted {
+      opacity: 0.42;
+    }
+
+    .study-slot.is-highlight {
+      box-shadow: inset 0 0 0 3px rgba(200, 134, 43, 0.35);
+    }
+
+    .term-chip {
+      width: 100%;
+      border: 1px solid #80a5be;
+      background: linear-gradient(180deg, #ffffff 0%, #f0f7fc 100%);
+      border-radius: 8px;
+      padding: 4px 6px;
+      text-align: center;
+      color: #1b3143;
+      font-size: clamp(0.66rem, 0.63vw, 0.78rem);
+      line-height: 1.18;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 3px 8px rgba(25, 56, 82, 0.09);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+    }
+
+    .model-surface .term-chip {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: normal;
+      hyphens: auto;
+      text-wrap: balance;
+      line-height: 1.2;
+      padding: 2px 3px;
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      color: #10283b;
+    }
+
+    .pool .term-chip {
+      width: auto;
+      max-width: 100%;
+      padding-inline: 9px;
+      min-height: 28px;
+      font-size: 0.76rem;
+      text-wrap: balance;
+    }
+
+    .term-chip:active {
+      cursor: grabbing;
+    }
+
+    .term-chip.selected {
+      outline: 3px solid var(--attention);
+      outline-offset: 1px;
+    }
+
+    .term-chip.study-chip {
+      cursor: pointer;
+      border-color: #6f96af;
+      background: linear-gradient(180deg, #ffffff 0%, #edf6fd 100%);
+      font-weight: 600;
+      font-size: clamp(0.66rem, 0.64vw, 0.8rem);
+      box-shadow: 0 2px 7px rgba(17, 55, 89, 0.08);
+    }
+
+    .model-surface .term-chip.study-chip {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      cursor: pointer;
+    }
+
+    @media (max-width: 1560px) {
+      .controls-grid {
+        grid-template-columns: minmax(190px, 0.9fr) minmax(310px, 1.35fr) minmax(190px, 0.95fr) auto;
+      }
+
+      .workspace {
+        grid-template-columns: clamp(290px, 34vw, 390px) minmax(0, 1fr);
+      }
+
+      .tab-subtitle {
+        display: none;
+      }
+
+      .tab {
+        min-height: 34px;
+      }
+    }
+
+    @media (max-width: 1320px) {
+      .controls-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .action-group {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .workspace {
+        grid-template-columns: clamp(270px, 35vw, 360px) minmax(0, 1fr);
+      }
+
+      .hint {
+        white-space: normal;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-switch {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .action-group {
+        grid-column: auto;
+        grid-template-columns: 1fr;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .model-panel {
+        min-height: 56vh;
+      }
+    }
+
+    @media (max-height: 860px) {
+      .header {
+        padding: 6px 7px;
+      }
+
+      .control-block {
+        padding: 5px 6px;
+      }
+
+      .tab {
+        min-height: 32px;
+      }
+    }
+    /* ESTILOS MODO CLÍNICO */
+    body[data-mode="clinico"] {
+      --accent: #008060;
+      --accent-strong: #005a43;
+      --accent-soft: #e6f6f2;
+      --accent-outline: rgba(0, 128, 96, 0.24);
+    }
+    
+    .clinico-card {
+      background: #fff;
+      border: 1px solid #dcdce6;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .clinico-sintomas {
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: #3b454e;
+      background: #fdfdfd;
+      padding: 10px;
+      border-left: 3px solid #008060;
+      border-radius: 4px;
+      margin: 8px 0;
+    }
+
+    .fase-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: #e9ecef;
+      color: #495057;
+      padding: 3px 6px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .fase-badge.active {
+      background: #008060;
+      color: #fff;
+    }
+
+    .clinico-feedback {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin: 8px 0;
+      display: none;
+      line-height: 1.3;
+    }
+
+    .clinico-feedback.error {
+      display: block;
+      background: #fdf0f0;
+      border: 1px solid #fad3d3;
+      color: #c92a2a;
+    }
+
+    .clinico-feedback.success {
+      display: block;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+    
+    .clinico-btn {
+      width: 100%;
+      background: #008060;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    
+    .clinico-btn:hover {
+      background: #005a43;
+    }
+
+    .clinico-btn:disabled {
+      background: #ced4da;
+      cursor: not-allowed;
+    }
+    
+    .rehab-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .rehab-option {
+      background: #fff;
+      border: 1px solid #ced4da;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-align: left;
+      line-height: 1.3;
+      transition: all 0.2s;
+    }
+
+    .rehab-option.selected {
+      border-color: #008060;
+      background: #e6f6f2;
+      font-weight: 600;
+    }
+
+    .slot-clinico {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .slot-clinico:hover {
+      box-shadow: inset 0 0 0 2px rgba(0, 128, 96, 0.35);
+    }
+
+    .slot-clinico.selected {
+      box-shadow: inset 0 0 0 3px rgba(0, 128, 96, 0.5);
+    }
+
+    .drop-slot.success {
+      box-shadow: inset 0 0 0 3px rgba(43, 138, 62, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="header" id="header">
+      <div class="header-top">
+        <div>
+          <p class="eyebrow">Modelo Neurocognitivo</p>
+          <h1 class="title" id="pageTitle"></h1>
+          <p class="hint" id="pageHint"></p>
+        </div>
+        <div class="state-pills" aria-live="polite">
+          <span class="state-pill" id="modePill"></span>
+          <span class="state-pill" id="tabPill"></span>
+        </div>
+      </div>
+      <div class="controls-grid">
+        <div class="control-block mode-block">
+          <p class="control-label">Modo de Interação</p>
+          <div class="mode-switch" id="modeSwitch"></div>
+        </div>
+        <div class="control-block">
+          <p class="control-label">Apresentação do Modelo</p>
+          <div class="tabs" id="tabs"></div>
+        </div>
+        <div class="control-block">
+          <p class="control-label">Filtro de Estudo</p>
+          <div class="study-filters" id="studyFilters"></div>
+        </div>
+        <div class="action-group">
+          <button class="action-btn" id="fullscreenBtn" type="button">Ecrã inteiro</button>
+          <button class="action-btn" id="shuffleBtn" type="button">Limpar e Baralhar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <aside class="panel side-panel">
+        <h2 class="side-title" id="sideTitle"></h2>
+        <p class="side-meta" id="sideMeta"></p>
+        <div id="sideBody"></div>
+      </aside>
+
+      <section class="panel model-panel" id="modelPanel">
+        <div class="model-surface" id="modelSurface" aria-label="Modelo"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const SLOT_DEFS = [
+      { id: "top_left", x: 185, y: 77, w: 170, h: 66 },
+      { id: "top_right", x: 845, y: 77, w: 170, h: 66 },
+      { id: "mid_left_1", x: 185, y: 197, w: 170, h: 66 },
+      { id: "mid_right_1", x: 845, y: 197, w: 170, h: 66 },
+      { id: "mid_left_2_outer", x: 65, y: 317, w: 170, h: 66 },
+      { id: "mid_left_2_inner", x: 305, y: 317, w: 170, h: 66 },
+      { id: "mid_right_2_inner", x: 725, y: 317, w: 170, h: 66 },
+      { id: "mid_right_2_outer", x: 965, y: 317, w: 170, h: 66 },
+      { id: "center", x: 493, y: 416, w: 214, h: 88 },
+      { id: "low_left", x: 305, y: 597, w: 170, h: 66 },
+      { id: "low_right", x: 725, y: 597, w: 170, h: 66 },
+      { id: "bottom_left", x: 213, y: 757, w: 214, h: 66 },
+      { id: "bottom_center", x: 515, y: 757, w: 170, h: 66 },
+      { id: "bottom_right", x: 773, y: 757, w: 214, h: 66 },
+      { id: "final_left", x: 185, y: 897, w: 170, h: 66 },
+      { id: "final_right", x: 845, y: 897, w: 170, h: 66 }
+    ];
+
+    const STUDY_GROUPS = [
+      {
+        id: "entradas",
+        label: "Entradas",
+        slotIds: ["top_left", "top_right", "mid_left_1", "mid_right_1"]
+      },
+      {
+        id: "processamento",
+        label: "Processamento",
+        slotIds: ["mid_left_2_outer", "mid_left_2_inner", "mid_right_2_inner", "mid_right_2_outer", "center", "low_left", "low_right"]
+      },
+      {
+        id: "saida",
+        label: "Saídas",
+        slotIds: ["bottom_left", "bottom_center", "bottom_right", "final_left", "final_right"]
+      }
+    ];
+
+    const STUDY_FOCUSES = {
+      all: {
+        label: "Completo",
+        slotIds: null
+      },
+      entradas: {
+        label: "Entradas",
+        slotIds: STUDY_GROUPS[0].slotIds
+      },
+      processamento: {
+        label: "Processamento",
+        slotIds: STUDY_GROUPS[1].slotIds
+      },
+      saida: {
+        label: "Saídas",
+        slotIds: STUDY_GROUPS[2].slotIds
+      }
+    };
+
+    const MODE_COPY = {
+      estudo: {
+        title: "Modo de estudo",
+        hint: "Modelo preenchido para consolidação visual. Alterne entre Geral, Perturbações e Tarefas/Reabilitação."
+      },
+      teste: {
+        title: "Modo de teste",
+        hint: "Modelo vazio com treino de evocação ativa. Arraste termos para o local certo em qualquer apresentação."
+      },
+      clinico: {
+        title: "Diagnóstico Clínico",
+        hint: "Assuma o papel de Clínico! Analise os sintomas do paciente e identifique a lesão, a patologia e o plano de reabilitação num formato gamificado."
+      }
+    };
+
+    const MODELS = {
+      geral: {
+        label: "Geral",
+        subtitle: "Arquitetura base",
+        termsBySlot: {
+          top_left: "Palavra Falada",
+          top_right: "Palavra Escrita",
+          mid_left_1: "Análise Acústica",
+          mid_right_1: "Análise Visual",
+          mid_left_2_outer: "Conversão Acústico-Fonológico",
+          mid_left_2_inner: "Léxico Fonológico de Entrada",
+          mid_right_2_inner: "Léxico Ortográfico de Entrada",
+          mid_right_2_outer: "Conversão Grafema-Fonema",
+          center: "Sistema Semântico",
+          low_left: "Léxico Fonológico de Saída",
+          low_right: "Léxico Ortográfico de Saída",
+          bottom_left: "Buffer Fonémico",
+          bottom_center: "Conversão Fonema-Grafema",
+          bottom_right: "Buffer Grafémico",
+          final_left: "Fala",
+          final_right: "Escrita"
+        }
+      },
+      patologias: {
+        label: "Perturbações",
+        subtitle: "Mapa de deficits",
+        termsBySlot: {
+          top_left: "Palavra Falada",
+          top_right: "Palavra Escrita",
+          mid_left_1: "Surdez Verbal",
+          mid_right_1: "Alexia Pura",
+          mid_left_2_outer: "Agnosia Fonológica",
+          mid_left_2_inner: "Surdez para a Forma",
+          mid_right_2_inner: "Dislexia Superficial",
+          mid_right_2_outer: "Dislexia Fonológica",
+          center: "Afasia Semântica",
+          low_left: "Anomia",
+          low_right: "Disgrafia Superficial",
+          bottom_left: "Anomia Fonémica",
+          bottom_center: "Disgrafia Fonológica",
+          bottom_right: "Disgrafia Grafémica",
+          final_left: "Fala",
+          final_right: "Escrita"
+        }
+      },
+      reabilitacao: {
+        label: "Tarefas/Reabilitação",
+        subtitle: "Intervenção clínica",
+        termsBySlot: {
+          top_left: "Palavra Falada",
+          top_right: "Palavra Escrita",
+          mid_left_1: "Discriminação de Fonemas",
+          mid_right_1: "Discriminação de Letras",
+          mid_left_2_outer: "Repetição de Pseudo-palavras",
+          mid_left_2_inner: "Decisão Lexical Fonológica",
+          mid_right_2_inner: "Decisão Lexical Ortográfica",
+          mid_right_2_outer: "Leitura de Pseudo-palavras",
+          center: "Categorização Semântica",
+          low_left: "Denominação",
+          low_right: "Ditado de Palavras Irregulares",
+          bottom_left: "Selecção de Fonemas",
+          bottom_center: "Ditado de Pseudo-palavras",
+          bottom_right: "Ditado de Grafemas",
+          final_left: "Fala",
+          final_right: "Escrita"
+        }
+      }
+    };
+
+    const MODULO_TO_SLOT = {
+      "Análise Acústica": ["mid_left_1"],
+      "Análise Visual": ["mid_right_1"],
+      "Léxico Fonológico de Entrada": ["mid_left_2_inner"],
+      "Léxico Ortográfico de Entrada": ["mid_right_2_inner"],
+      "Via de Reconhecimento Global (Léxico Ortográfico)": ["mid_right_2_inner"],
+      "Conversão Acústico-Fonológico": ["mid_left_2_outer"],
+      "Conversão Grafema-Fonema": ["mid_right_2_outer"],
+      "Conversão Grafema-Fonema (Via Não-Lexical)": ["mid_right_2_outer"],
+      "Sistema Semântico": ["center"],
+      "Léxico Fonológico de Saída": ["low_left"],
+      "Léxico Ortográfico de Saída": ["low_right"],
+      "Buffer Fonémico": ["bottom_left"],
+      "Buffer Fonémico / Seleção de Fonemas": ["bottom_left"],
+      "Conversão Fonema-Grafema": ["bottom_center"],
+      "Conversão Fonema-Grafema (Via Fonológica de Escrita)": ["bottom_center"],
+      "Buffer Grafémico": ["bottom_right"],
+      "Fala": ["final_left"],
+      "Escrita": ["final_right"]
+    };
+
+    const CASOS_CLINICOS = [
+  {
+    "modulos_vias_afetados": [
+      "Análise Acústica",
+      "Léxico Fonológico de Entrada"
+    ],
+    "perturbacoes": "Surdez Verbal / Surdez para a Forma",
+    "sintomas_linguisticos": "A pessoa apresenta dificuldade extrema em discriminar sons da fala e reconhecer palavras auditivamente, embora a audição periférica possa estar intacta. Há uma falha na entrada do sistema de linguagem falada.",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Discriminação de Fonemas",
+        "instrucoes_clinicas": "Apresente oralmente pares mínimos de palavras ou sílabas (ex: pato/bato; faca/vaca). Peça ao paciente para indicar se os sons ouvidos são 'iguais' ou 'diferentes'. Dica de ouro: tape a boca com um papel ou fique atrás do paciente para garantir que ele não está a recorrer à leitura labial para compensar a falha auditiva."
+      },
+      {
+        "tarefa": "Decisão Lexical Fonológica",
+        "instrucoes_clinicas": "Diga em voz alta uma mistura de palavras reais do idioma e pseudopalavras (palavras inventadas que respeitam as regras da língua, ex: 'plastro'). O paciente deve responder apenas 'Sim' (se for uma palavra real) ou 'Não'. Isto treina o reconhecimento no léxico de entrada."
+      }
+    ]
+  },
+  {
+    "modulos_vias_afetados": [
+      "Sistema Semântico"
+    ],
+    "perturbacoes": "Afasia Semântica",
+    "sintomas_linguisticos": "Dificuldade em aceder ao significado de palavras, tanto na compreensão como na produção. O paciente pode ler ou repetir palavras sem compreender o seu conceito.",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Categorização Semântica",
+        "instrucoes_clinicas": "Forneça um conjunto de cartões com imagens ou palavras escritas.  Peça ao paciente para agrupá-las por categorias (ex: 'Separe as ferramentas dos animais'). Para aumentar a dificuldade, peça-lhe para encontrar o 'intruso' numa lista de palavras da mesma família semântica (ex: maçã, banana, pêra, alface)."
+      }
+    ]
+  },
+  {
+    "modulos_vias_afetados": [
+      "Léxico Fonológico de Saída"
+    ],
+    "perturbacoes": "Anomia",
+    "sintomas_linguisticos": "Dificuldade em encontrar as palavras corretas durante a fala espontânea (fenómeno da 'ponta da língua'), apesar de o conceito semântico estar preservado.",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Denominação",
+        "instrucoes_clinicas": "Utilize a 'denominação por confrontação visual'. Mostre imagens de objetos quotidianos e peça ao paciente para dizer o nome. Se ele bloquear, forneça pistas hierárquicas: primeiro uma pista semântica ('Serve para cortar carne'), seguida de uma pista fonémica ('Começa por fa...'). Reforce positivamente qualquer tentativa bem-sucedida."
+      }
+    ]
+  },
+  {
+    "modulos_vias_afetados": [
+      "Análise Visual",
+      "Via de Reconhecimento Global (Léxico Ortográfico)"
+    ],
+    "perturbacoes": "Alexia Pura / Dislexia Superficial",
+    "sintomas_linguisticos": "Dificuldade no processamento visual de palavras ou na leitura de palavras irregulares (que não seguem a regra grafema-fonema padrão). A leitura torna-se lenta, muitas vezes letra a letra.",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Discriminação de Letras",
+        "instrucoes_clinicas": "Apresente pares de letras visualmente semelhantes (ex: p/q, b/d, m/n) impressos em cartões. Peça ao paciente para apontar se são iguais ou diferentes. Aumente gradualmente a complexidade usando diferentes tipos de letra (cursiva vs. imprensa) ou letras inseridas no meio de palavras longas."
+      },
+      {
+        "tarefa": "Decisão Lexical Ortográfica",
+        "instrucoes_clinicas": "Apresente uma lista escrita misturando palavras reais (especialmente irregulares) e pseudopalavras com grafia semelhante a palavras reais (ex: 'taxi' vs 'tacsi'). O paciente deve sublinhar ou apontar apenas para as que existem de facto no dicionário."
+      }
+    ]
+  },
+  {
+    "modulos_vias_afetados": [
+      "Conversão Grafema-Fonema (Via Não-Lexical)"
+    ],
+    "perturbacoes": "Dislexia Fonológica",
+    "sintomas_linguisticos": "Incapacidade ou grande dificuldade em ler pseudopalavras (palavras inventadas) ou palavras desconhecidas, pois a via de conversão direta está comprometida.",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Leitura de Pseudo-palavras",
+        "instrucoes_clinicas": "Crie uma lista de palavras que não existem (pseudopalavras) organizadas por complexidade silábica (CV, CVC, CCV, etc.). Peça ao paciente para as ler em voz alta. O foco aqui não é a velocidade, mas a precisão na conversão de cada letra no seu respetivo som, forçando a via sub-lexical."
+      }
+    ]
+  },
+  {
+    "modulos_vias_afetados": [
+      "Conversão Fonema-Grafema (Via Fonológica de Escrita)"
+    ],
+    "perturbacoes": "Disgrafia Fonológica",
+    "sintomas_linguisticos": "Dificuldade em escrever palavras desconhecidas ou pseudopalavras através do ditado, devido à falha na conversão dos sons em símbolos escritos.",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Ditado de Pseudo-palavras",
+        "instrucoes_clinicas": "Dite lentamente sílabas sem sentido ou pseudopalavras (ex: 'mipo', 'crafe') e peça ao paciente para as escrever. Se ele tiver dificuldade, segmente a palavra com ele ('Primeiro som: mmm... que letra faz este som?'). Elogie a tentativa ortográfica, mesmo que a letra seja desenhada de forma trémula."
+      }
+    ]
+  },
+  {
+    "modulos_vias_afetados": [
+      "Léxico Ortográfico de Saída"
+    ],
+    "perturbacoes": "Disgrafia Superficial",
+    "sintomas_linguisticos": "Dificuldade em escrever palavras irregulares corretamente, tendendo a escrevê-las foneticamente (ex: escrever 'ezame' em vez de 'exame').",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Ditado de Palavras Irregulares",
+        "instrucoes_clinicas": "Selecione previamente uma lista de palavras do português que não se escrevem exatamente como soam (ex: 'exceção', 'táxi', 'homem'). Dite-as no contexto de uma frase ('A exceção confirma a regra. Escreva exceção'). Corrija imediatamente o erro, mostrando o cartão com a ortografia correta e pedindo que o paciente a copie 3 vezes."
+      }
+    ]
+  },
+  {
+    "modulos_vias_afetados": [
+      "Buffer Fonémico / Seleção de Fonemas"
+    ],
+    "perturbacoes": "Anomia Fonémica",
+    "sintomas_linguisticos": "Erros na seleção ou ordenação dos sons durante a fala, resultando em trocas de fonemas ou parafasias fonémicas.",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Selecção de Fonemas",
+        "instrucoes_clinicas": "Forneça tarefas de consciência fonémica. Diga uma palavra e pergunte 'Qual é o primeiro som da palavra BOLA?' ou 'O que fica de GATO se lhe tirarmos o G?'. Pode também apresentar 3 imagens e pedir para apontar 'Qual destas começa com o som /p/?'. O foco é isolar e manipular mentalmente os blocos sonoros."
+      }
+    ]
+  },
+  {
+    "modulos_vias_afetados": [
+      "Buffer Grafémico"
+    ],
+    "perturbacoes": "Disgrafia Grafémica",
+    "sintomas_linguisticos": "Erros na escrita ao nível da soletração, com omissões, substituições ou transposições de letras, afetando a execução final da palavra escrita.",
+    "exemplos_tarefas_reabilitacao": [
+      {
+        "tarefa": "Ditado de Grafemas",
+        "instrucoes_clinicas": "Trabalhe a sustentação na memória de trabalho motora. Dite letras isoladas aleatoriamente (não em ordem alfabética) e peça que as escreva. Se dominado, passe para soletração oral em que o psicólogo dita a palavra letra-a-letra (P-O-R-T-A) e o paciente tem de reter a sequência no buffer grafémico para a escrever de seguida no papel."
+      }
+    ]
+  }
+];
+
+    const state = {
+      currentMode: "estudo",
+      currentTab: "geral",
+      currentFocus: "all",
+      byTab: {},
+      highlightSlotByTab: {},
+      clinico: {
+        activeCaseIndex: 0,
+        phase: 1, // 1: Lesion Mapping, 2: Diagnosis, 3: Rehab
+        cases: [], // Randomized cases
+        score: 0,
+        selectedSlotsForPhase1: new Set(),
+        errorMsg: null,
+        successMsg: null,
+        rehabOptions: [] // Current options for phase 3
+      }
+    };
+
+    const appEl = document.querySelector(".app");
+    const headerEl = document.getElementById("header");
+    const workspaceEl = document.getElementById("workspace");
+    const pageTitleEl = document.getElementById("pageTitle");
+    const pageHintEl = document.getElementById("pageHint");
+    const modePillEl = document.getElementById("modePill");
+    const tabPillEl = document.getElementById("tabPill");
+    const modeSwitchEl = document.getElementById("modeSwitch");
+    const tabsEl = document.getElementById("tabs");
+    const studyFiltersEl = document.getElementById("studyFilters");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+
+    const sideTitleEl = document.getElementById("sideTitle");
+    const sideMetaEl = document.getElementById("sideMeta");
+    const sideBodyEl = document.getElementById("sideBody");
+    const modelPanelEl = document.getElementById("modelPanel");
+    const modelSurfaceEl = document.getElementById("modelSurface");
+    const MODE_RATIO = 6 / 5;
+
+    function shuffle(list) {
+      const arr = [...list];
+      for (let i = arr.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function createEmptyPlacements() {
+      return Object.fromEntries(SLOT_DEFS.map((slot) => [slot.id, null]));
+    }
+
+    function resetTab(tabKey) {
+      const termIds = Object.keys(MODELS[tabKey].termsBySlot);
+      state.byTab[tabKey] = {
+        pool: shuffle(termIds),
+        placements: createEmptyPlacements(),
+        selectedTermId: null
+      };
+    }
+
+    function termLabel(tabKey, termId) {
+      return MODELS[tabKey].termsBySlot[termId];
+    }
+
+    function slotStyle(slotEl, slot) {
+      slotEl.style.left = `${(slot.x / 1200) * 100}%`;
+      slotEl.style.top = `${(slot.y / 1000) * 100}%`;
+      slotEl.style.width = `${(slot.w / 1200) * 100}%`;
+      slotEl.style.height = `${(slot.h / 1000) * 100}%`;
+    }
+
+    function locateTerm(tabState, termId) {
+      if (tabState.pool.includes(termId)) {
+        return { type: "pool" };
+      }
+      for (const slotId of Object.keys(tabState.placements)) {
+        if (tabState.placements[slotId] === termId) {
+          return { type: "slot", slotId };
+        }
+      }
+      return null;
+    }
+
+    function moveTermToPool(tabState, termId) {
+      const location = locateTerm(tabState, termId);
+      if (!location) {
+        return;
+      }
+      if (location.type === "slot") {
+        tabState.placements[location.slotId] = null;
+      }
+      if (!tabState.pool.includes(termId)) {
+        tabState.pool.push(termId);
+      }
+    }
+
+    function placeTermInSlot(tabState, termId, targetSlotId) {
+      const source = locateTerm(tabState, termId);
+      if (!source) {
+        return false;
+      }
+
+      const isCorrectSlot = termId === targetSlotId;
+      if (!isCorrectSlot) {
+        moveTermToPool(tabState, termId);
+        return false;
+      }
+
+      const targetTerm = tabState.placements[targetSlotId] && tabState.placements[targetSlotId] !== termId
+        ? tabState.placements[targetSlotId]
+        : null;
+
+      if (source.type === "slot" && source.slotId === targetSlotId) {
+        return true;
+      }
+
+      if (source.type === "pool") {
+        tabState.pool = tabState.pool.filter((id) => id !== termId);
+      } else {
+        tabState.placements[source.slotId] = null;
+      }
+
+      if (targetTerm) {
+        moveTermToPool(tabState, targetTerm);
+      }
+
+      tabState.placements[targetSlotId] = termId;
+      return true;
+    }
+
+    function createTestChip(tabKey, termId) {
+      const tabState = state.byTab[tabKey];
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "term-chip";
+      chip.textContent = termLabel(tabKey, termId);
+      chip.dataset.termId = termId;
+      chip.draggable = true;
+
+      if (tabState.selectedTermId === termId) {
+        chip.classList.add("selected");
+      }
+
+      chip.addEventListener("dragstart", (event) => {
+        event.dataTransfer.setData("text/plain", termId);
+      });
+
+      chip.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const active = state.byTab[state.currentTab];
+        active.selectedTermId = active.selectedTermId === termId ? null : termId;
+        render();
+      });
+
+      return chip;
+    }
+
+    function createStudyChip(tabKey, slotId) {
+      const chip = document.createElement("div");
+      chip.className = "term-chip study-chip";
+      chip.textContent = termLabel(tabKey, slotId);
+      return chip;
+    }
+
+    function wireDroppable(el, onDrop) {
+      el.ondragover = (event) => {
+        event.preventDefault();
+        el.classList.add("drag-over");
+      };
+
+      el.ondragleave = () => {
+        el.classList.remove("drag-over");
+      };
+
+      el.ondrop = (event) => {
+        event.preventDefault();
+        el.classList.remove("drag-over");
+        const termId = event.dataTransfer.getData("text/plain");
+        if (!termId) {
+          return;
+        }
+        onDrop(termId);
+      };
+    }
+
+    function getVisibleSlotsForStudy() {
+      const focus = STUDY_FOCUSES[state.currentFocus];
+      if (!focus || focus.slotIds === null) {
+        return new Set(SLOT_DEFS.map((slot) => slot.id));
+      }
+      return new Set(focus.slotIds);
+    }
+
+    function buildModeSwitch() {
+      modeSwitchEl.innerHTML = "";
+      [
+        { id: "estudo", label: "Estudo" },
+        { id: "teste", label: "Teste" },
+        { id: "clinico", label: "Clínico" }
+      ].forEach((mode) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "mode-btn";
+        if (state.currentMode === mode.id) {
+          btn.classList.add("active");
+        }
+        btn.textContent = mode.label;
+        btn.setAttribute("aria-pressed", String(state.currentMode === mode.id));
+        btn.addEventListener("click", () => {
+          if (mode.id === "clinico" && state.currentMode !== "clinico") {
+             initClinicoMode();
+          }
+          state.currentMode = mode.id;
+          const active = state.byTab[state.currentTab];
+          if(active) active.selectedTermId = null;
+          render();
+        });
+        modeSwitchEl.appendChild(btn);
+      });
+    }
+
+    function buildTabs() {
+      tabsEl.innerHTML = "";
+      for (const [tabKey, model] of Object.entries(MODELS)) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tab";
+        if (tabKey === state.currentTab) {
+          btn.classList.add("active");
+        }
+        btn.setAttribute("aria-pressed", String(tabKey === state.currentTab));
+        btn.innerHTML = `
+          <span class="tab-title">${model.label}</span>
+          <span class="tab-subtitle">${model.subtitle}</span>
+        `;
+        btn.addEventListener("click", () => {
+          state.currentTab = tabKey;
+          const active = state.byTab[state.currentTab];
+          active.selectedTermId = null;
+          render();
+        });
+        tabsEl.appendChild(btn);
+      }
+    }
+
+    function renderStudyFilters() {
+      const show = state.currentMode === "estudo";
+      studyFiltersEl.classList.toggle("is-hidden", !show);
+      studyFiltersEl.innerHTML = "";
+
+      if (!show) {
+        return;
+      }
+
+      Object.entries(STUDY_FOCUSES).forEach(([focusId, focus]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "study-filter";
+        if (state.currentFocus === focusId) {
+          btn.classList.add("active");
+        }
+        btn.textContent = focus.label;
+        btn.addEventListener("click", () => {
+          state.currentFocus = focusId;
+          const visibleSlots = getVisibleSlotsForStudy();
+          const highlighted = state.highlightSlotByTab[state.currentTab];
+          if (highlighted && !visibleSlots.has(highlighted)) {
+            state.highlightSlotByTab[state.currentTab] = null;
+          }
+          render();
+        });
+        studyFiltersEl.appendChild(btn);
+      });
+    }
+
+    function renderStudyPanel() {
+      const tabKey = state.currentTab;
+      const visibleSlots = getVisibleSlotsForStudy();
+
+      sideTitleEl.textContent = "Guia de estudo";
+      sideMetaEl.textContent = `${MODELS[tabKey].label} · clique num termo para destacar no modelo.`;
+
+      const groupsWrap = document.createElement("div");
+      groupsWrap.className = "study-groups";
+
+      STUDY_GROUPS.forEach((group) => {
+        const section = document.createElement("section");
+        section.className = "study-group";
+
+        const heading = document.createElement("h3");
+        heading.textContent = group.label;
+
+        const list = document.createElement("ul");
+        list.className = "study-list";
+
+        group.slotIds.forEach((slotId) => {
+          const item = document.createElement("li");
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "study-term-btn";
+          const termText = termLabel(tabKey, slotId);
+          btn.textContent = termText;
+
+          let detailHtml = "";
+          const isActive = state.highlightSlotByTab[tabKey] === slotId;
+
+          if (isActive) {
+            btn.classList.add("active");
+            
+            if (tabKey === "patologias") {
+              const caso = CASOS_CLINICOS.find(c => c.perturbacoes.includes(termText));
+              if (caso) {
+                detailHtml = `<div style="font-size:0.75rem; color:#4a4a4a; background:#fffaf0; padding:8px; border-radius:0 0 8px 8px; border:1px solid #e2c08d; border-top:none; margin-top:-4px; position:relative; z-index:0; line-height:1.35;">
+                  <strong>Sintomas:</strong> ${caso.sintomas_linguisticos}
+                </div>`;
+                btn.style.borderBottomLeftRadius = "0";
+                btn.style.borderBottomRightRadius = "0";
+                btn.style.position = "relative";
+                btn.style.zIndex = "1";
+              }
+            } else if (tabKey === "reabilitacao") {
+              let foundTask = null;
+              for (const caso of CASOS_CLINICOS) {
+                foundTask = caso.exemplos_tarefas_reabilitacao.find(t => t.tarefa.includes(termText) || termText.includes(t.tarefa));
+                if (foundTask) break;
+              }
+              if (foundTask) {
+                detailHtml = `<div style="font-size:0.75rem; color:#4a4a4a; background:#fffaf0; padding:8px; border-radius:0 0 8px 8px; border:1px solid #e2c08d; border-top:none; margin-top:-4px; position:relative; z-index:0; line-height:1.35;">
+                  <strong>Instruções Clínicas:</strong> ${foundTask.instrucoes_clinicas}
+                </div>`;
+                btn.style.borderBottomLeftRadius = "0";
+                btn.style.borderBottomRightRadius = "0";
+                btn.style.position = "relative";
+                btn.style.zIndex = "1";
+              }
+            }
+          }
+
+          if (!visibleSlots.has(slotId)) {
+            btn.disabled = true;
+            btn.style.opacity = "0.55";
+          }
+
+          btn.addEventListener("click", () => {
+            state.highlightSlotByTab[tabKey] = state.highlightSlotByTab[tabKey] === slotId ? null : slotId;
+            render();
+          });
+
+          item.appendChild(btn);
+          if (detailHtml) {
+             item.insertAdjacentHTML('beforeend', detailHtml);
+          }
+          list.appendChild(item);
+        });
+
+        section.appendChild(heading);
+        section.appendChild(list);
+        groupsWrap.appendChild(section);
+      });
+
+      sideBodyEl.appendChild(groupsWrap);
+    }
+
+    function renderTestPanel() {
+      const tabKey = state.currentTab;
+      const tabState = state.byTab[tabKey];
+
+      sideTitleEl.textContent = "Termos";
+      sideMetaEl.textContent = `${tabState.pool.length} termo(s) por colocar`;
+
+      const pool = document.createElement("div");
+      pool.className = "pool";
+      pool.setAttribute("aria-label", "Zona de termos");
+
+      tabState.pool.forEach((termId) => {
+        pool.appendChild(createTestChip(tabKey, termId));
+      });
+
+      wireDroppable(pool, (termId) => {
+        const active = state.byTab[state.currentTab];
+        moveTermToPool(active, termId);
+        active.selectedTermId = null;
+        render();
+      });
+
+      pool.onclick = () => {
+        const active = state.byTab[state.currentTab];
+        if (active.selectedTermId) {
+          moveTermToPool(active, active.selectedTermId);
+          active.selectedTermId = null;
+          render();
+        }
+      };
+
+      sideBodyEl.appendChild(pool);
+    }
+
+    function renderSidePanel() {
+      sideBodyEl.innerHTML = "";
+      if (state.currentMode === "estudo") {
+        renderStudyPanel();
+      } else if (state.currentMode === "teste") {
+        renderTestPanel();
+      } else if (state.currentMode === "clinico") {
+        renderClinicoPanel();
+      }
+    }
+
+    function renderStudyModel() {
+      const tabKey = state.currentTab;
+      const visibleSlots = getVisibleSlotsForStudy();
+      const highlighted = state.highlightSlotByTab[tabKey];
+
+      modelSurfaceEl.innerHTML = "";
+
+      SLOT_DEFS.forEach((slot) => {
+        const slotEl = document.createElement("div");
+        slotEl.className = "drop-slot study-slot";
+        slotEl.dataset.slotId = slot.id;
+        slotStyle(slotEl, slot);
+
+        const visible = visibleSlots.has(slot.id);
+        if (!visible) {
+          slotEl.classList.add("is-muted");
+        } else {
+          slotEl.appendChild(createStudyChip(tabKey, slot.id));
+        }
+
+        if (highlighted === slot.id && visible) {
+          slotEl.classList.add("is-highlight");
+        }
+
+        slotEl.addEventListener("click", () => {
+          if (!visible) {
+            return;
+          }
+          state.highlightSlotByTab[tabKey] = state.highlightSlotByTab[tabKey] === slot.id ? null : slot.id;
+          render();
+        });
+
+        modelSurfaceEl.appendChild(slotEl);
+      });
+    }
+
+    function renderTestModel() {
+      const tabKey = state.currentTab;
+      const tabState = state.byTab[tabKey];
+
+      modelSurfaceEl.innerHTML = "";
+
+      SLOT_DEFS.forEach((slot) => {
+        const slotEl = document.createElement("div");
+        slotEl.className = "drop-slot";
+        slotEl.dataset.slotId = slot.id;
+        slotStyle(slotEl, slot);
+
+        const termId = tabState.placements[slot.id];
+        if (termId) {
+          slotEl.appendChild(createTestChip(tabKey, termId));
+        }
+
+        wireDroppable(slotEl, (draggedTermId) => {
+          const active = state.byTab[state.currentTab];
+          placeTermInSlot(active, draggedTermId, slot.id);
+          active.selectedTermId = null;
+          render();
+        });
+
+        slotEl.addEventListener("click", () => {
+          const active = state.byTab[state.currentTab];
+          if (active.selectedTermId) {
+            placeTermInSlot(active, active.selectedTermId, slot.id);
+            active.selectedTermId = null;
+            render();
+            return;
+          }
+          const current = active.placements[slot.id];
+          if (current) {
+            active.selectedTermId = current;
+            render();
+          }
+        });
+
+        modelSurfaceEl.appendChild(slotEl);
+      });
+    }
+
+    function renderModel() {
+      if (state.currentMode === "estudo") {
+        renderStudyModel();
+      } else if (state.currentMode === "teste") {
+        renderTestModel();
+      } else if (state.currentMode === "clinico") {
+        renderClinicoModel();
+      }
+    }
+
+    function updateHeader() {
+      const copy = MODE_COPY[state.currentMode];
+      pageTitleEl.textContent = copy.title;
+      pageHintEl.textContent = copy.hint;
+      
+      if (state.currentMode === "clinico") {
+        modePillEl.textContent = `Pontuação: ${state.clinico.score} pts`;
+        tabPillEl.textContent = `Caso ${state.clinico.activeCaseIndex + 1} de ${state.clinico.cases.length}`;
+        tabsEl.closest('.control-block').classList.add("is-hidden");
+      } else {
+        modePillEl.textContent = `Modo: ${state.currentMode === "estudo" ? "Estudo" : "Teste"}`;
+        tabPillEl.textContent = `Apresentação: ${MODELS[state.currentTab].label}`;
+        tabsEl.closest('.control-block').classList.remove("is-hidden");
+      }
+      
+      document.body.dataset.mode = state.currentMode;
+      shuffleBtn.classList.toggle("is-hidden", state.currentMode !== "teste");
+      updateFullscreenButton();
+    }
+
+    function currentFullscreenElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+
+    function updateFullscreenButton() {
+      if (!fullscreenBtn) {
+        return;
+      }
+      const isFullscreen = Boolean(currentFullscreenElement());
+      fullscreenBtn.textContent = isFullscreen ? "Sair do ecrã inteiro" : "Ecrã inteiro";
+      fullscreenBtn.setAttribute("aria-pressed", String(isFullscreen));
+    }
+
+    async function requestFullscreenMode() {
+      const root = document.documentElement;
+      if (root.requestFullscreen) {
+        return root.requestFullscreen();
+      }
+      if (root.webkitRequestFullscreen) {
+        return root.webkitRequestFullscreen();
+      }
+      return Promise.reject(new Error("Fullscreen API indisponível."));
+    }
+
+    async function exitFullscreenMode() {
+      if (document.exitFullscreen) {
+        return document.exitFullscreen();
+      }
+      if (document.webkitExitFullscreen) {
+        return document.webkitExitFullscreen();
+      }
+      return Promise.resolve();
+    }
+
+    async function toggleFullscreenMode() {
+      try {
+        if (currentFullscreenElement()) {
+          await exitFullscreenMode();
+        } else {
+          await requestFullscreenMode();
+        }
+      } catch (error) {
+        console.warn("Não foi possível alterar para ecrã inteiro.", error);
+      } finally {
+        updateFullscreenButton();
+        syncLayout();
+      }
+    }
+
+    async function tryStartInFullscreen() {
+      if (currentFullscreenElement()) {
+        updateFullscreenButton();
+        return;
+      }
+      try {
+        await requestFullscreenMode();
+      } catch (error) {
+        // A maioria dos browsers exige interação do utilizador.
+      } finally {
+        updateFullscreenButton();
+        syncLayout();
+      }
+    }
+
+    function fitWorkspaceToViewport() {
+      const appStyle = getComputedStyle(appEl);
+      const verticalPadding = parseFloat(appStyle.paddingTop) + parseFloat(appStyle.paddingBottom);
+      const rowGap = parseFloat(appStyle.rowGap || appStyle.gap || "0");
+      const availableHeight = window.innerHeight - verticalPadding - rowGap - headerEl.offsetHeight;
+      workspaceEl.style.height = `${Math.max(availableHeight, 280)}px`;
+    }
+
+    function fitModelSurface() {
+      const panelStyle = getComputedStyle(modelPanelEl);
+      const innerWidth = modelPanelEl.clientWidth
+        - parseFloat(panelStyle.paddingLeft)
+        - parseFloat(panelStyle.paddingRight);
+      const innerHeight = modelPanelEl.clientHeight
+        - parseFloat(panelStyle.paddingTop)
+        - parseFloat(panelStyle.paddingBottom);
+
+      if (innerWidth <= 0 || innerHeight <= 0) {
+        return;
+      }
+
+      let width = innerWidth;
+      let height = width / MODE_RATIO;
+
+      if (height > innerHeight) {
+        height = innerHeight;
+        width = height * MODE_RATIO;
+      }
+
+      modelSurfaceEl.style.width = `${Math.floor(width)}px`;
+      modelSurfaceEl.style.height = `${Math.floor(height)}px`;
+    }
+
+    function fitTextInsideChip(chip) {
+      const chipWidth = chip.clientWidth;
+      const chipHeight = chip.clientHeight;
+      if (chipWidth <= 12 || chipHeight <= 10) {
+        return;
+      }
+
+      const isFullscreen = Boolean(currentFullscreenElement());
+      const minFont = 5.2;
+      const maxFont = Math.min(
+        isFullscreen ? 19 : 14,
+        chipHeight * (isFullscreen ? 0.48 : 0.37) + (isFullscreen ? 5.5 : 4.5)
+      );
+      const safeWidth = chipWidth - 2;
+      const safeHeight = chipHeight - 2;
+      let fontSize = maxFont;
+
+      chip.style.lineHeight = "1.2";
+      chip.style.fontSize = `${fontSize}px`;
+
+      while (fontSize > minFont) {
+        const fitsWidth = chip.scrollWidth <= safeWidth;
+        const fitsHeight = chip.scrollHeight <= safeHeight;
+        if (fitsWidth && fitsHeight) {
+          break;
+        }
+        fontSize -= 0.5;
+        chip.style.fontSize = `${fontSize}px`;
+      }
+
+      chip.style.fontSize = `${Math.max(minFont, fontSize)}px`;
+    }
+
+    function fitModelChipTexts() {
+      modelSurfaceEl.querySelectorAll(".term-chip").forEach((chip) => {
+        fitTextInsideChip(chip);
+      });
+    }
+
+    function initClinicoMode() {
+      state.clinico.cases = shuffle([...CASOS_CLINICOS]);
+      state.clinico.activeCaseIndex = 0;
+      state.clinico.score = 0;
+      resetClinicoPhase();
+    }
+
+    function resetClinicoPhase() {
+      state.clinico.phase = 1;
+      state.clinico.selectedSlotsForPhase1.clear();
+      state.clinico.errorMsg = null;
+      state.clinico.successMsg = null;
+      state.clinico.phase2Term = null;
+      
+      const currentCase = state.clinico.cases[state.clinico.activeCaseIndex];
+      if (!currentCase) return;
+      
+      const allRehabs = CASOS_CLINICOS.flatMap(c => c.exemplos_tarefas_reabilitacao);
+      const correctRehabs = currentCase.exemplos_tarefas_reabilitacao;
+      const distractors = shuffle(allRehabs.filter(r => !correctRehabs.includes(r))).slice(0, 2);
+      state.clinico.rehabOptions = shuffle([...correctRehabs, ...distractors]);
+      state.clinico.selectedRehabsForPhase3 = new Set();
+    }
+
+    function renderClinicoPanel() {
+      const cState = state.clinico;
+      const currentCase = cState.cases[cState.activeCaseIndex];
+
+      if (!currentCase) {
+        sideTitleEl.textContent = "Parabéns!";
+        sideMetaEl.textContent = "Concluiu todos os casos clínicos.";
+        sideBodyEl.innerHTML = `<p class="clinico-sintomas">A sua pontuação final foi de ${cState.score} pontos.</p>
+                                <button class="clinico-btn" onclick="initClinicoMode(); render();">Reiniciar Jogo</button>`;
+        return;
+      }
+
+      sideTitleEl.textContent = "Processo Clínico";
+      sideMetaEl.textContent = `Analise os sintomas com atenção.`;
+
+      let html = `<div class="clinico-card">
+        <span class="fase-badge ${cState.phase === 1 ? 'active' : ''}">Passo 1: Lesão</span>
+        <span class="fase-badge ${cState.phase === 2 ? 'active' : ''}">Passo 2: Diagnóstico</span>
+        <span class="fase-badge ${cState.phase === 3 ? 'active' : ''}">Passo 3: Tratamento</span>
+        
+        <div class="clinico-sintomas">
+          <strong>Sintomas Linguísticos:</strong><br/>
+          ${currentCase.sintomas_linguisticos}
+        </div>
+      `;
+
+      if (cState.errorMsg) {
+        html += `<div class="clinico-feedback error">${cState.errorMsg}</div>`;
+      }
+      if (cState.successMsg) {
+        html += `<div class="clinico-feedback success">${cState.successMsg}</div>`;
+      }
+
+      if (cState.phase === 1) {
+        html += `<p style="font-size:0.85rem; margin-bottom:5px;"><strong>Localize a Lesão:</strong><br>No modelo à direita, selecione o(s) módulo(s) que origina(m) estes sintomas.</p>
+                 <button class="clinico-btn" id="btnValidateP1" ${cState.selectedSlotsForPhase1.size === 0 ? 'disabled' : ''}>Validar Hipótese</button>`;
+      } else if (cState.phase === 2) {
+        html += `<p style="font-size:0.85rem; margin-bottom:5px;">Qual é a <strong>perturbação correspondente</strong>?</p>
+                 <div class="rehab-list" id="diagList">`;
+        const diagOptions = [...new Set(CASOS_CLINICOS.map(c => c.perturbacoes))].sort();
+        diagOptions.forEach(opt => {
+           const isSelected = cState.phase2Term === opt;
+           html += `<button class="rehab-option ${isSelected ? 'selected' : ''}" data-opt="${opt}">${opt}</button>`;
+        });
+        html += `</div>
+                 <button class="clinico-btn" id="btnValidateP2" ${!cState.phase2Term ? 'disabled' : ''} style="margin-top:10px;">Confirmar Diagnóstico</button>`;
+      } else if (cState.phase === 3) {
+        html += `<p style="font-size:0.85rem; margin-bottom:5px;">Selecione a(s) tarefa(s) de <strong>reabilitação indicada(s)</strong>:</p>
+                 <div class="rehab-list" id="rehabList">`;
+        cState.rehabOptions.forEach((opt, idx) => {
+           const isSelected = cState.selectedRehabsForPhase3.has(idx);
+           html += `<div class="rehab-option ${isSelected ? 'selected' : ''}" data-idx="${idx}">
+                      <strong>${opt.tarefa}</strong><br/>
+                      <span style="font-size:0.75rem; color:#555;">${opt.instrucoes_clinicas}</span>
+                    </div>`;
+        });
+        html += `</div>
+                 <button class="clinico-btn" id="btnValidateP3" ${cState.selectedRehabsForPhase3.size === 0 ? 'disabled' : ''} style="margin-top:10px;">Aplicar Intervenção</button>`;
+      } else if (cState.phase === 4) {
+         html += `<button class="clinico-btn" id="btnNextCase">Avançar para Próximo Caso</button>`;
+      }
+
+      html += `</div>`;
+      sideBodyEl.innerHTML = html;
+
+      if (cState.phase === 1) {
+        const btn = document.getElementById("btnValidateP1");
+        if(btn) btn.onclick = () => validatePhase1();
+      } else if (cState.phase === 2) {
+        document.querySelectorAll("#diagList .rehab-option").forEach(el => {
+           el.onclick = () => {
+             cState.phase2Term = el.dataset.opt;
+             cState.errorMsg = null;
+             cState.successMsg = null;
+             render();
+           };
+        });
+        const btn = document.getElementById("btnValidateP2");
+        if(btn) btn.onclick = () => validatePhase2();
+      } else if (cState.phase === 3) {
+        document.querySelectorAll("#rehabList .rehab-option").forEach(el => {
+           el.onclick = () => {
+             const idx = parseInt(el.dataset.idx);
+             if(cState.selectedRehabsForPhase3.has(idx)) {
+               cState.selectedRehabsForPhase3.delete(idx);
+             } else {
+               cState.selectedRehabsForPhase3.add(idx);
+             }
+             cState.errorMsg = null;
+             cState.successMsg = null;
+             render();
+           };
+        });
+        const btn = document.getElementById("btnValidateP3");
+        if(btn) btn.onclick = () => validatePhase3();
+      } else if (cState.phase === 4) {
+        const btn = document.getElementById("btnNextCase");
+        if (btn) btn.onclick = () => {
+           cState.activeCaseIndex++;
+           resetClinicoPhase();
+           render();
+        };
+      }
+    }
+
+    function getExpectedSlotsForCurrentCase() {
+      const cState = state.clinico;
+      const currentCase = cState.cases[cState.activeCaseIndex];
+      let expectedSlots = [];
+      currentCase.modulos_vias_afetados.forEach(mod => {
+         if(MODULO_TO_SLOT[mod]) {
+           expectedSlots = expectedSlots.concat(MODULO_TO_SLOT[mod]);
+         }
+      });
+      return expectedSlots;
+    }
+
+    function validatePhase1() {
+      const expected = getExpectedSlotsForCurrentCase();
+      const selectedArr = Array.from(state.clinico.selectedSlotsForPhase1);
+      
+      const isCorrect = expected.length > 0 && expected.length === selectedArr.length && expected.every(e => selectedArr.includes(e));
+      if (isCorrect) {
+        state.clinico.score += 100;
+        state.clinico.phase = 2;
+        state.clinico.errorMsg = null;
+        state.clinico.successMsg = "Lesão localizada com sucesso! Ganhou +100 pts.";
+      } else {
+        state.clinico.score = Math.max(0, state.clinico.score - 20);
+        state.clinico.errorMsg = "Topografia incorreta. Reveja os sintomas (-20 pts).";
+        state.clinico.selectedSlotsForPhase1.clear();
+      }
+      render();
+    }
+
+    function validatePhase2() {
+      const currentCase = state.clinico.cases[state.clinico.activeCaseIndex];
+      if (state.clinico.phase2Term === currentCase.perturbacoes) {
+        state.clinico.score += 100;
+        state.clinico.phase = 3;
+        state.clinico.errorMsg = null;
+        state.clinico.successMsg = "Diagnóstico correto! Ganhou +100 pts. Avance para a intervenção.";
+      } else {
+        state.clinico.score = Math.max(0, state.clinico.score - 20);
+        state.clinico.errorMsg = "Diagnóstico incorreto. Tente novamente (-20 pts).";
+        state.clinico.phase2Term = null;
+      }
+      render();
+    }
+
+    function validatePhase3() {
+      const currentCase = state.clinico.cases[state.clinico.activeCaseIndex];
+      const correctTasks = currentCase.exemplos_tarefas_reabilitacao;
+      let allCorrect = true;
+      let selectedCount = 0;
+      
+      state.clinico.selectedRehabsForPhase3.forEach(idx => {
+         selectedCount++;
+         const selTask = state.clinico.rehabOptions[idx];
+         if (!correctTasks.includes(selTask)) {
+           allCorrect = false;
+         }
+      });
+
+      if (selectedCount === correctTasks.length && allCorrect) {
+        state.clinico.score += 100;
+        state.clinico.phase = 4;
+        state.clinico.errorMsg = null;
+        state.clinico.successMsg = "Plano de reabilitação perfeito! Ganhou +100 pts. Caso resolvido.";
+      } else {
+        state.clinico.score = Math.max(0, state.clinico.score - 20);
+        state.clinico.errorMsg = "Plano incorreto ou incompleto. Marque apenas as indicadas (-20 pts).";
+        state.clinico.selectedRehabsForPhase3.clear();
+      }
+      render();
+    }
+
+    function renderClinicoModel() {
+      modelSurfaceEl.innerHTML = "";
+      const cState = state.clinico;
+      const expectedSlots = getExpectedSlotsForCurrentCase();
+
+      SLOT_DEFS.forEach((slot) => {
+        const slotEl = document.createElement("div");
+        slotEl.className = "drop-slot study-slot slot-clinico";
+        slotEl.dataset.slotId = slot.id;
+        slotStyle(slotEl, slot);
+
+        if (cState.phase === 1) {
+          if (cState.selectedSlotsForPhase1.has(slot.id)) {
+            slotEl.classList.add("selected");
+          }
+          slotEl.addEventListener("click", () => {
+             if (cState.selectedSlotsForPhase1.has(slot.id)) {
+               cState.selectedSlotsForPhase1.delete(slot.id);
+             } else {
+               cState.selectedSlotsForPhase1.add(slot.id);
+             }
+             cState.errorMsg = null;
+             cState.successMsg = null;
+             render();
+          });
+        } else {
+          // Fase 2 e 3: Mostrar a lesão a verde e desativar interações no modelo
+          if (expectedSlots.includes(slot.id)) {
+            slotEl.classList.add("success");
+            slotEl.classList.remove("slot-clinico");
+          } else {
+            slotEl.style.opacity = "0.42";
+            slotEl.classList.remove("slot-clinico");
+          }
+        }
+
+        const chip = createStudyChip("geral", slot.id);
+        
+        slotEl.appendChild(chip);
+        modelSurfaceEl.appendChild(slotEl);
+      });
+    }
+
+    let textFitRafId = null;
+    let textFitRafIdPost = null;
+    let textFitTimeoutId = null;
+    function syncLayout() {
+      fitWorkspaceToViewport();
+      fitModelSurface();
+      if (textFitRafId !== null) {
+        cancelAnimationFrame(textFitRafId);
+      }
+      if (textFitRafIdPost !== null) {
+        cancelAnimationFrame(textFitRafIdPost);
+      }
+      if (textFitTimeoutId !== null) {
+        clearTimeout(textFitTimeoutId);
+      }
+      textFitRafId = requestAnimationFrame(() => {
+        textFitRafId = null;
+        fitModelChipTexts();
+        textFitRafIdPost = requestAnimationFrame(() => {
+          textFitRafIdPost = null;
+          fitWorkspaceToViewport();
+          fitModelSurface();
+          fitModelChipTexts();
+        });
+      });
+      textFitTimeoutId = setTimeout(() => {
+        textFitTimeoutId = null;
+        fitWorkspaceToViewport();
+        fitModelSurface();
+        fitModelChipTexts();
+      }, 120);
+    }
+
+    function render() {
+      buildModeSwitch();
+      buildTabs();
+      renderStudyFilters();
+      updateHeader();
+      renderSidePanel();
+      renderModel();
+      syncLayout();
+    }
+
+    shuffleBtn.addEventListener("click", () => {
+      if (state.currentMode !== "teste") {
+        return;
+      }
+      resetTab(state.currentTab);
+      render();
+    });
+
+    fullscreenBtn.addEventListener("click", () => {
+      toggleFullscreenMode();
+    });
+
+    let resizeRafId = null;
+    window.addEventListener("resize", () => {
+      if (resizeRafId !== null) {
+        cancelAnimationFrame(resizeRafId);
+      }
+      resizeRafId = requestAnimationFrame(() => {
+        resizeRafId = null;
+        syncLayout();
+      });
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      updateFullscreenButton();
+      syncLayout();
+    });
+    document.addEventListener("webkitfullscreenchange", () => {
+      updateFullscreenButton();
+      syncLayout();
+    });
+    window.addEventListener("load", () => {
+      syncLayout();
+    });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        syncLayout();
+      });
+    }
+
+    Object.keys(MODELS).forEach((tabKey) => {
+      resetTab(tabKey);
+      state.highlightSlotByTab[tabKey] = null;
+    });
+
+    render();
+    tryStartInFullscreen();
+  </script>
+</body>
+</html>
