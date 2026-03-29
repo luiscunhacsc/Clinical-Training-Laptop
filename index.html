@@ -633,6 +633,10 @@
       .clinico-actions {
         grid-template-columns: 1fr;
       }
+
+      .app-attribution {
+        font-size: 0.5rem;
+      }
     }
 
     @media (max-height: 860px) {
@@ -799,6 +803,24 @@
     .drop-slot.success {
       box-shadow: inset 0 0 0 3px rgba(43, 138, 62, 0.5);
     }
+
+    .app-attribution {
+      position: fixed;
+      right: 10px;
+      bottom: 8px;
+      z-index: 30;
+      max-width: min(24ch, calc(100vw - 16px));
+      font-size: 0.54rem;
+      color: #6d7f8f;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(173, 191, 206, 0.5);
+      border-radius: 999px;
+      padding: 2px 8px;
+      backdrop-filter: blur(2px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
@@ -853,6 +875,9 @@
       </section>
     </section>
   </main>
+  <footer class="app-attribution">
+    (C) LSC, 2026
+  </footer>
 
   <script>
     const SLOT_DEFS = [

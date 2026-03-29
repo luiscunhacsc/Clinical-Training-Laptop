@@ -17,7 +17,7 @@ Tudo funciona num único ficheiro (`index.html`), ideal para uso em sala de aula
 - **3 modos pedagógicos**: Estudo, Teste e Clínico.
 - **3 apresentações do modelo**: Geral, Perturbações e Tarefas/Reabilitação.
 - **Pontuação gamificada no modo clínico**.
-- **Botão “Mostrar resposta certa” no modo clínico**, com fluxo UX seguro:
+- **Botão "Mostrar resposta certa" no modo clínico**, com fluxo UX seguro:
   - confirmação antes de revelar;
   - continuação sem pontuar na fase atual;
   - destaque visual da solução.
@@ -57,7 +57,7 @@ http://localhost:8000
 2. **Passo 2 - Diagnóstico**: escolher a perturbação correta.
 3. **Passo 3 - Tratamento**: selecionar tarefas de reabilitação adequadas.
 
-Se necessário, use **“Mostrar resposta certa”** para desbloquear o estudo sem interromper o caso.
+Se necessário, use **"Mostrar resposta certa"** para desbloquear o estudo sem interromper o caso.
 
 ## Publicar no GitHub Pages
 
@@ -125,7 +125,16 @@ Issues e Pull Requests são bem-vindos para:
 - refinamento pedagógico;
 - acessibilidade e desempenho.
 
+## Créditos e Contacto
+
+- Autor: **Luís Simões da Cunha**, (C) 2026.
+- Membro Efetivo da Ordem dos Psicólogos Portugueses.
+- Cédula **#189**.
+- Especialista (OPP) em Psicologia Clínica.
+- Especialidade Avançada (OPP) em Neuropsicologia.
+- Para indicação de bugs ou sugestões de melhoria:
+  - `luis.luiscunha.docencia@gmail.com`
+
 ## Licença
 
-Atualmente este repositório não define uma licença explícita.  
-Se pretender publicar em produção, recomenda-se adicionar uma licença (ex.: MIT).
+Este projeto está licenciado sob a **MIT License**.
