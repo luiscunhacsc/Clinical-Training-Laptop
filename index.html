@@ -1751,21 +1751,23 @@
       }
 
       const isFullscreen = Boolean(currentFullscreenElement());
-      const minFont = 5.2;
+      const minFont = isFullscreen ? 7.2 : 5.6;
       const maxFont = Math.min(
-        isFullscreen ? 19 : 14,
-        chipHeight * (isFullscreen ? 0.48 : 0.37) + (isFullscreen ? 5.5 : 4.5)
+        isFullscreen ? 24 : 16,
+        chipHeight * (isFullscreen ? 0.6 : 0.42) + (isFullscreen ? 6.2 : 5.1)
       );
-      const safeWidth = chipWidth - 2;
-      const safeHeight = chipHeight - 2;
+      const safeWidth = chipWidth - (isFullscreen ? 0 : 2);
+      const safeHeight = chipHeight - (isFullscreen ? 0 : 2);
+      const widthSlack = isFullscreen ? 8 : 3;
+      const heightSlack = isFullscreen ? 5 : 2;
       let fontSize = maxFont;
 
-      chip.style.lineHeight = "1.2";
+      chip.style.lineHeight = isFullscreen ? "1.14" : "1.18";
       chip.style.fontSize = `${fontSize}px`;
 
       while (fontSize > minFont) {
-        const fitsWidth = chip.scrollWidth <= safeWidth;
-        const fitsHeight = chip.scrollHeight <= safeHeight;
+        const fitsWidth = chip.scrollWidth <= safeWidth + widthSlack;
+        const fitsHeight = chip.scrollHeight <= safeHeight + heightSlack;
         if (fitsWidth && fitsHeight) {
           break;
         }
