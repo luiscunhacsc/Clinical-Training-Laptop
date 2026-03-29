@@ -629,6 +629,10 @@
       .top-actions {
         grid-template-columns: 1fr;
       }
+
+      .clinico-actions {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-height: 860px) {
@@ -736,6 +740,23 @@
     .clinico-btn:disabled {
       background: #ced4da;
       cursor: not-allowed;
+    }
+
+    .clinico-btn.secondary {
+      background: #eef4fa;
+      color: #21435f;
+      border: 1px solid #bfd2e2;
+    }
+
+    .clinico-btn.secondary:hover {
+      background: #e2edf8;
+    }
+
+    .clinico-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
     }
     
     .rehab-list {
@@ -1139,7 +1160,8 @@
         selectedSlotsForPhase1: new Set(),
         errorMsg: null,
         successMsg: null,
-        rehabOptions: [] // Current options for phase 3
+        rehabOptions: [], // Current options for phase 3
+        revealedPhase: null
       }
     };
 
@@ -1797,6 +1819,7 @@
       state.clinico.errorMsg = null;
       state.clinico.successMsg = null;
       state.clinico.phase2Term = null;
+      state.clinico.revealedPhase = null;
       
       const currentCase = state.clinico.cases[state.clinico.activeCaseIndex];
       if (!currentCase) return;
@@ -1827,7 +1850,7 @@
         <span class="fase-badge ${cState.phase === 1 ? 'active' : ''}">Passo 1: Lesão</span>
         <span class="fase-badge ${cState.phase === 2 ? 'active' : ''}">Passo 2: Diagnóstico</span>
         <span class="fase-badge ${cState.phase === 3 ? 'active' : ''}">Passo 3: Tratamento</span>
-        
+
         <div class="clinico-sintomas">
           <strong>Sintomas Linguísticos:</strong><br/>
           ${currentCase.sintomas_linguisticos}
@@ -1842,73 +1865,129 @@
       }
 
       if (cState.phase === 1) {
-        html += `<p style="font-size:0.85rem; margin-bottom:5px;"><strong>Localize a Lesão:</strong><br>No modelo à direita, selecione o(s) módulo(s) que origina(m) estes sintomas.</p>
-                 <button class="clinico-btn" id="btnValidateP1" ${cState.selectedSlotsForPhase1.size === 0 ? 'disabled' : ''}>Validar Hipótese</button>`;
+        html += `<p style="font-size:0.85rem; margin-bottom:5px;"><strong>Localize a Lesão:</strong><br/>No modelo à direita, selecione o(s) módulo(s) que origina(m) estes sintomas.</p>`;
+
+        if (cState.revealedPhase === 1) {
+          html += `<button class="clinico-btn" id="btnContinueReveal">Continuar sem pontuar</button>`;
+        } else {
+          html += `<div class="clinico-actions">
+                    <button class="clinico-btn secondary" id="btnRevealP1">Mostrar resposta certa</button>
+                    <button class="clinico-btn" id="btnValidateP1" ${cState.selectedSlotsForPhase1.size === 0 ? 'disabled' : ''}>Validar Hipótese</button>
+                  </div>`;
+        }
       } else if (cState.phase === 2) {
         html += `<p style="font-size:0.85rem; margin-bottom:5px;">Qual é a <strong>perturbação correspondente</strong>?</p>
                  <div class="rehab-list" id="diagList">`;
+
         const diagOptions = [...new Set(CASOS_CLINICOS.map(c => c.perturbacoes))].sort();
         diagOptions.forEach(opt => {
-           const isSelected = cState.phase2Term === opt;
-           html += `<button class="rehab-option ${isSelected ? 'selected' : ''}" data-opt="${opt}">${opt}</button>`;
+          const isSelected = cState.phase2Term === opt;
+          html += `<button class="rehab-option ${isSelected ? 'selected' : ''}" data-opt="${opt}">${opt}</button>`;
         });
-        html += `</div>
-                 <button class="clinico-btn" id="btnValidateP2" ${!cState.phase2Term ? 'disabled' : ''} style="margin-top:10px;">Confirmar Diagnóstico</button>`;
+
+        html += `</div>`;
+        if (cState.revealedPhase === 2) {
+          html += `<button class="clinico-btn" id="btnContinueReveal">Continuar sem pontuar</button>`;
+        } else {
+          html += `<div class="clinico-actions">
+                    <button class="clinico-btn secondary" id="btnRevealP2">Mostrar resposta certa</button>
+                    <button class="clinico-btn" id="btnValidateP2" ${!cState.phase2Term ? 'disabled' : ''}>Confirmar Diagnóstico</button>
+                  </div>`;
+        }
       } else if (cState.phase === 3) {
         html += `<p style="font-size:0.85rem; margin-bottom:5px;">Selecione a(s) tarefa(s) de <strong>reabilitação indicada(s)</strong>:</p>
                  <div class="rehab-list" id="rehabList">`;
+
         cState.rehabOptions.forEach((opt, idx) => {
-           const isSelected = cState.selectedRehabsForPhase3.has(idx);
-           html += `<div class="rehab-option ${isSelected ? 'selected' : ''}" data-idx="${idx}">
+          const isSelected = cState.selectedRehabsForPhase3.has(idx);
+          html += `<div class="rehab-option ${isSelected ? 'selected' : ''}" data-idx="${idx}">
                       <strong>${opt.tarefa}</strong><br/>
                       <span style="font-size:0.75rem; color:#555;">${opt.instrucoes_clinicas}</span>
                     </div>`;
         });
-        html += `</div>
-                 <button class="clinico-btn" id="btnValidateP3" ${cState.selectedRehabsForPhase3.size === 0 ? 'disabled' : ''} style="margin-top:10px;">Aplicar Intervenção</button>`;
+
+        html += `</div>`;
+        if (cState.revealedPhase === 3) {
+          html += `<button class="clinico-btn" id="btnContinueReveal">Continuar sem pontuar</button>`;
+        } else {
+          html += `<div class="clinico-actions">
+                    <button class="clinico-btn secondary" id="btnRevealP3">Mostrar resposta certa</button>
+                    <button class="clinico-btn" id="btnValidateP3" ${cState.selectedRehabsForPhase3.size === 0 ? 'disabled' : ''}>Aplicar Intervenção</button>
+                  </div>`;
+        }
       } else if (cState.phase === 4) {
-         html += `<button class="clinico-btn" id="btnNextCase">Avançar para Próximo Caso</button>`;
+        html += `<button class="clinico-btn" id="btnNextCase">Avançar para Próximo Caso</button>`;
       }
 
       html += `</div>`;
       sideBodyEl.innerHTML = html;
 
       if (cState.phase === 1) {
-        const btn = document.getElementById("btnValidateP1");
-        if(btn) btn.onclick = () => validatePhase1();
+        const btnContinue = document.getElementById("btnContinueReveal");
+        const btnValidate = document.getElementById("btnValidateP1");
+        const btnReveal = document.getElementById("btnRevealP1");
+
+        if (cState.revealedPhase === 1) {
+          if (btnContinue) btnContinue.onclick = () => continueAfterReveal();
+        } else {
+          if (btnValidate) btnValidate.onclick = () => validatePhase1();
+          if (btnReveal) btnReveal.onclick = () => revealCurrentPhaseAnswer();
+        }
       } else if (cState.phase === 2) {
-        document.querySelectorAll("#diagList .rehab-option").forEach(el => {
-           el.onclick = () => {
-             cState.phase2Term = el.dataset.opt;
-             cState.errorMsg = null;
-             cState.successMsg = null;
-             render();
-           };
-        });
-        const btn = document.getElementById("btnValidateP2");
-        if(btn) btn.onclick = () => validatePhase2();
+        if (cState.revealedPhase !== 2) {
+          document.querySelectorAll("#diagList .rehab-option").forEach(el => {
+            el.onclick = () => {
+              cState.phase2Term = el.dataset.opt;
+              cState.errorMsg = null;
+              cState.successMsg = null;
+              render();
+            };
+          });
+        }
+
+        const btnContinue = document.getElementById("btnContinueReveal");
+        const btnValidate = document.getElementById("btnValidateP2");
+        const btnReveal = document.getElementById("btnRevealP2");
+
+        if (cState.revealedPhase === 2) {
+          if (btnContinue) btnContinue.onclick = () => continueAfterReveal();
+        } else {
+          if (btnValidate) btnValidate.onclick = () => validatePhase2();
+          if (btnReveal) btnReveal.onclick = () => revealCurrentPhaseAnswer();
+        }
       } else if (cState.phase === 3) {
-        document.querySelectorAll("#rehabList .rehab-option").forEach(el => {
-           el.onclick = () => {
-             const idx = parseInt(el.dataset.idx);
-             if(cState.selectedRehabsForPhase3.has(idx)) {
-               cState.selectedRehabsForPhase3.delete(idx);
-             } else {
-               cState.selectedRehabsForPhase3.add(idx);
-             }
-             cState.errorMsg = null;
-             cState.successMsg = null;
-             render();
-           };
-        });
-        const btn = document.getElementById("btnValidateP3");
-        if(btn) btn.onclick = () => validatePhase3();
+        if (cState.revealedPhase !== 3) {
+          document.querySelectorAll("#rehabList .rehab-option").forEach(el => {
+            el.onclick = () => {
+              const idx = parseInt(el.dataset.idx, 10);
+              if (cState.selectedRehabsForPhase3.has(idx)) {
+                cState.selectedRehabsForPhase3.delete(idx);
+              } else {
+                cState.selectedRehabsForPhase3.add(idx);
+              }
+              cState.errorMsg = null;
+              cState.successMsg = null;
+              render();
+            };
+          });
+        }
+
+        const btnContinue = document.getElementById("btnContinueReveal");
+        const btnValidate = document.getElementById("btnValidateP3");
+        const btnReveal = document.getElementById("btnRevealP3");
+
+        if (cState.revealedPhase === 3) {
+          if (btnContinue) btnContinue.onclick = () => continueAfterReveal();
+        } else {
+          if (btnValidate) btnValidate.onclick = () => validatePhase3();
+          if (btnReveal) btnReveal.onclick = () => revealCurrentPhaseAnswer();
+        }
       } else if (cState.phase === 4) {
         const btn = document.getElementById("btnNextCase");
         if (btn) btn.onclick = () => {
-           cState.activeCaseIndex++;
-           resetClinicoPhase();
-           render();
+          cState.activeCaseIndex++;
+          resetClinicoPhase();
+          render();
         };
       }
     }
@@ -1925,9 +2004,65 @@
       return expectedSlots;
     }
 
+    function revealCurrentPhaseAnswer() {
+      const cState = state.clinico;
+      const currentCase = cState.cases[cState.activeCaseIndex];
+      if (!currentCase || cState.phase >= 4) {
+        return;
+      }
+
+      const shouldReveal = confirm("Mostrar a resposta certa desta fase? Esta fase não dará pontuação.");
+      if (!shouldReveal) {
+        return;
+      }
+
+      cState.errorMsg = null;
+
+      if (cState.phase === 1) {
+        cState.selectedSlotsForPhase1 = new Set(getExpectedSlotsForCurrentCase());
+      } else if (cState.phase === 2) {
+        cState.phase2Term = currentCase.perturbacoes;
+      } else if (cState.phase === 3) {
+        cState.selectedRehabsForPhase3 = new Set();
+        cState.rehabOptions.forEach((opt, idx) => {
+          if (currentCase.exemplos_tarefas_reabilitacao.includes(opt)) {
+            cState.selectedRehabsForPhase3.add(idx);
+          }
+        });
+      }
+
+      cState.revealedPhase = cState.phase;
+      cState.successMsg = "Resposta certa mostrada. Clique em \"Continuar sem pontuar\" para avançar.";
+      render();
+    }
+
+    function continueAfterReveal() {
+      const cState = state.clinico;
+      if (cState.revealedPhase !== cState.phase) {
+        return;
+      }
+
+      cState.errorMsg = null;
+      cState.revealedPhase = null;
+
+      if (cState.phase === 1) {
+        cState.phase = 2;
+        cState.successMsg = "Lesão correta mostrada. Avance para o diagnóstico.";
+      } else if (cState.phase === 2) {
+        cState.phase = 3;
+        cState.successMsg = "Diagnóstico correto mostrado. Avance para a intervenção.";
+      } else if (cState.phase === 3) {
+        cState.phase = 4;
+        cState.successMsg = "Plano correto mostrado. Pode avançar para o próximo caso.";
+      }
+
+      render();
+    }
+
     function validatePhase1() {
       const expected = getExpectedSlotsForCurrentCase();
       const selectedArr = Array.from(state.clinico.selectedSlotsForPhase1);
+      state.clinico.revealedPhase = null;
       
       const isCorrect = expected.length > 0 && expected.length === selectedArr.length && expected.every(e => selectedArr.includes(e));
       if (isCorrect) {
@@ -1945,6 +2080,7 @@
 
     function validatePhase2() {
       const currentCase = state.clinico.cases[state.clinico.activeCaseIndex];
+      state.clinico.revealedPhase = null;
       if (state.clinico.phase2Term === currentCase.perturbacoes) {
         state.clinico.score += 100;
         state.clinico.phase = 3;
@@ -1960,6 +2096,7 @@
 
     function validatePhase3() {
       const currentCase = state.clinico.cases[state.clinico.activeCaseIndex];
+      state.clinico.revealedPhase = null;
       const correctTasks = currentCase.exemplos_tarefas_reabilitacao;
       let allCorrect = true;
       let selectedCount = 0;
@@ -1997,19 +2134,27 @@
         slotStyle(slotEl, slot);
 
         if (cState.phase === 1) {
+          const phase1Revealed = cState.revealedPhase === 1;
           if (cState.selectedSlotsForPhase1.has(slot.id)) {
             slotEl.classList.add("selected");
           }
-          slotEl.addEventListener("click", () => {
-             if (cState.selectedSlotsForPhase1.has(slot.id)) {
-               cState.selectedSlotsForPhase1.delete(slot.id);
-             } else {
-               cState.selectedSlotsForPhase1.add(slot.id);
-             }
-             cState.errorMsg = null;
-             cState.successMsg = null;
-             render();
-          });
+          if (phase1Revealed && expectedSlots.includes(slot.id)) {
+            slotEl.classList.add("success");
+          }
+          if (!phase1Revealed) {
+            slotEl.addEventListener("click", () => {
+               if (cState.selectedSlotsForPhase1.has(slot.id)) {
+                 cState.selectedSlotsForPhase1.delete(slot.id);
+               } else {
+                 cState.selectedSlotsForPhase1.add(slot.id);
+               }
+               cState.errorMsg = null;
+               cState.successMsg = null;
+               render();
+            });
+          } else {
+            slotEl.classList.remove("slot-clinico");
+          }
         } else {
           // Fase 2 e 3: Mostrar a lesão a verde e desativar interações no modelo
           if (expectedSlots.includes(slot.id)) {
