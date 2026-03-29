@@ -55,13 +55,15 @@
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 14px;
-      padding: clamp(7px, 0.7vw, 10px);
+      padding: 8px 10px;
       box-shadow: var(--panel-shadow);
-      display: grid;
-      gap: 6px;
+      display: flex;
+      align-items: center;
+      min-height: 64px;
     }
 
     .header-top {
+      width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -71,6 +73,8 @@
 
     .header-brand {
       min-width: 0;
+      display: grid;
+      gap: 2px;
     }
 
     .eyebrow {
@@ -90,14 +94,23 @@
     }
 
     .hint {
-      margin: 2px 0 0;
+      margin: 1px 0 0;
       color: var(--muted);
-      font-size: clamp(0.74rem, 0.78vw, 0.86rem);
+      font-size: clamp(0.72rem, 0.74vw, 0.82rem);
       line-height: 1.2;
-      max-width: min(100ch, 100%);
+      max-width: min(80ch, 100%);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .header-rail {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      min-width: 0;
+      flex-wrap: wrap;
     }
 
     .state-pills {
@@ -120,9 +133,15 @@
       white-space: nowrap;
     }
 
+    .side-controls {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
     .controls-grid {
       display: grid;
-      grid-template-columns: minmax(210px, 0.95fr) minmax(360px, 1.5fr) minmax(220px, 1fr) auto;
+      grid-template-columns: 1fr;
       gap: 8px;
       align-items: stretch;
     }
@@ -260,11 +279,15 @@
       background: #eef5fb;
     }
 
-    .action-group {
-      display: grid;
-      grid-template-columns: 1fr;
+    .top-actions {
+      display: flex;
       gap: 8px;
-      align-self: stretch;
+      align-items: center;
+    }
+
+    .top-actions .action-btn {
+      min-width: 132px;
+      white-space: nowrap;
     }
 
     .is-hidden {
@@ -273,7 +296,7 @@
 
     .workspace {
       display: grid;
-      grid-template-columns: clamp(310px, 33.5vw, 430px) minmax(0, 1fr);
+      grid-template-columns: minmax(300px, 34%) minmax(0, 66%);
       gap: clamp(8px, 0.95vw, 12px);
       align-items: stretch;
       min-height: 0;
@@ -290,11 +313,17 @@
 
     .side-panel {
       padding: clamp(10px, 1vw, 14px);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .side-content {
+      min-height: 0;
       overflow: auto;
       overscroll-behavior: contain;
-      display: grid;
-      grid-template-rows: auto auto minmax(0, 1fr);
-      gap: 2px;
+      padding-right: 2px;
     }
 
     .side-title {
@@ -521,12 +550,8 @@
     }
 
     @media (max-width: 1560px) {
-      .controls-grid {
-        grid-template-columns: minmax(190px, 0.9fr) minmax(310px, 1.35fr) minmax(190px, 0.95fr) auto;
-      }
-
       .workspace {
-        grid-template-columns: clamp(290px, 34vw, 390px) minmax(0, 1fr);
+        grid-template-columns: minmax(280px, 35%) minmax(0, 65%);
       }
 
       .tab-subtitle {
@@ -539,40 +564,52 @@
     }
 
     @media (max-width: 1320px) {
-      .controls-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .action-group {
-        grid-column: 1 / -1;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
       .workspace {
-        grid-template-columns: clamp(270px, 35vw, 360px) minmax(0, 1fr);
-      }
-
-      .hint {
-        white-space: normal;
-      }
-    }
-
-    @media (max-width: 1080px) {
-      .controls-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .mode-switch {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: minmax(260px, 37%) minmax(0, 63%);
       }
 
       .tabs {
         grid-template-columns: 1fr;
       }
 
-      .action-group {
-        grid-column: auto;
-        grid-template-columns: 1fr;
+      .top-actions .action-btn {
+        min-width: 118px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .header {
+        padding: 8px;
+      }
+
+      .header-top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .header-rail {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .state-pills {
+        justify-content: flex-start;
+      }
+
+      .top-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .top-actions .action-btn {
+        width: 100%;
+        min-width: 0;
       }
 
       .workspace {
@@ -584,9 +621,20 @@
       }
     }
 
+    @media (max-width: 760px) {
+      .mode-switch {
+        grid-template-columns: 1fr;
+      }
+
+      .top-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-height: 860px) {
       .header {
-        padding: 6px 7px;
+        min-height: 58px;
+        padding: 6px 8px;
       }
 
       .control-block {
@@ -736,41 +784,47 @@
   <main class="app">
     <section class="header" id="header">
       <div class="header-top">
-        <div>
+        <div class="header-brand">
           <p class="eyebrow">Modelo Neurocognitivo</p>
           <h1 class="title" id="pageTitle"></h1>
           <p class="hint" id="pageHint"></p>
         </div>
-        <div class="state-pills" aria-live="polite">
-          <span class="state-pill" id="modePill"></span>
-          <span class="state-pill" id="tabPill"></span>
-        </div>
-      </div>
-      <div class="controls-grid">
-        <div class="control-block mode-block">
-          <p class="control-label">Modo de Interação</p>
-          <div class="mode-switch" id="modeSwitch"></div>
-        </div>
-        <div class="control-block">
-          <p class="control-label">Apresentação do Modelo</p>
-          <div class="tabs" id="tabs"></div>
-        </div>
-        <div class="control-block">
-          <p class="control-label">Filtro de Estudo</p>
-          <div class="study-filters" id="studyFilters"></div>
-        </div>
-        <div class="action-group">
-          <button class="action-btn" id="fullscreenBtn" type="button">Ecrã inteiro</button>
-          <button class="action-btn" id="shuffleBtn" type="button">Limpar e Baralhar</button>
+        <div class="header-rail">
+          <div class="state-pills" aria-live="polite">
+            <span class="state-pill" id="modePill"></span>
+            <span class="state-pill" id="tabPill"></span>
+          </div>
+          <div class="top-actions">
+            <button class="action-btn" id="fullscreenBtn" type="button">Ecrã inteiro</button>
+            <button class="action-btn" id="shuffleBtn" type="button">Limpar e Baralhar</button>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="workspace" id="workspace">
       <aside class="panel side-panel">
-        <h2 class="side-title" id="sideTitle"></h2>
-        <p class="side-meta" id="sideMeta"></p>
-        <div id="sideBody"></div>
+        <div class="side-controls">
+          <div class="controls-grid">
+            <div class="control-block mode-block">
+              <p class="control-label">Modo de Interação</p>
+              <div class="mode-switch" id="modeSwitch"></div>
+            </div>
+            <div class="control-block">
+              <p class="control-label">Apresentação do Modelo</p>
+              <div class="tabs" id="tabs"></div>
+            </div>
+            <div class="control-block">
+              <p class="control-label">Filtro de Estudo</p>
+              <div class="study-filters" id="studyFilters"></div>
+            </div>
+          </div>
+        </div>
+        <div class="side-content">
+          <h2 class="side-title" id="sideTitle"></h2>
+          <p class="side-meta" id="sideMeta"></p>
+          <div id="sideBody"></div>
+        </div>
       </aside>
 
       <section class="panel model-panel" id="modelPanel">
@@ -1318,6 +1372,10 @@
 
     function renderStudyFilters() {
       const show = state.currentMode === "estudo";
+      const filterBlock = studyFiltersEl.closest(".control-block");
+      if (filterBlock) {
+        filterBlock.classList.toggle("is-hidden", !show);
+      }
       studyFiltersEl.classList.toggle("is-hidden", !show);
       studyFiltersEl.innerHTML = "";
 
