@@ -273,10 +273,33 @@
       font-weight: 600;
       white-space: normal;
       line-height: 1.1;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
     }
 
     .action-btn:hover {
       background: #eef5fb;
+      border-color: #b9cad7;
+      transform: translateY(-1px);
+    }
+
+    .action-btn:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 3px rgba(13, 127, 103, 0.24);
+    }
+
+    .action-btn.exit-btn {
+      border-color: #e3c7c7;
+      background: linear-gradient(180deg, #fffdfd 0%, #fff4f4 100%);
+      color: #7b2b2b;
+    }
+
+    .action-btn.exit-btn:hover {
+      border-color: #d4aaaa;
+      background: #fdeeee;
+    }
+
+    .action-btn.exit-btn:focus-visible {
+      box-shadow: 0 0 0 3px rgba(181, 59, 59, 0.24);
     }
 
     .top-actions {
@@ -287,7 +310,6 @@
 
     .top-actions .action-btn {
       min-width: 132px;
-      white-space: nowrap;
     }
 
     .is-hidden {
@@ -840,6 +862,7 @@
           <div class="top-actions">
             <button class="action-btn" id="fullscreenBtn" type="button">Ecrã inteiro</button>
             <button class="action-btn" id="shuffleBtn" type="button">Limpar e Baralhar</button>
+            <button class="action-btn exit-btn" id="exitBtn" type="button" aria-label="Sair da aplicacao">Sair</button>
           </div>
         </div>
       </div>
@@ -1202,6 +1225,7 @@
     const studyFiltersEl = document.getElementById("studyFilters");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
     const shuffleBtn = document.getElementById("shuffleBtn");
+    const exitBtn = document.getElementById("exitBtn");
 
     const sideTitleEl = document.getElementById("sideTitle");
     const sideMetaEl = document.getElementById("sideMeta");
@@ -1209,6 +1233,320 @@
     const modelPanelEl = document.getElementById("modelPanel");
     const modelSurfaceEl = document.getElementById("modelSurface");
     const MODE_RATIO = 6 / 5;
+    const STORAGE_KEY = "modelo-neurocognitivo.progresso.v1";
+    const STORAGE_VERSION = 1;
+    const TAB_KEYS = Object.keys(MODELS);
+    const MODE_KEYS = ["estudo", "teste", "clinico"];
+    const SLOT_ID_SET = new Set(SLOT_DEFS.map((slot) => slot.id));
+    const FOCUS_ID_SET = new Set(Object.keys(STUDY_FOCUSES));
+    const CLINICO_DIAGNOSES = new Set(CASOS_CLINICOS.map((item) => item.perturbacoes));
+    const CASE_TO_INDEX = new Map();
+    const REHAB_TASK_TO_KEY = new Map();
+    const REHAB_KEY_TO_TASK = new Map();
+    let persistTimeoutId = null;
+
+    CASOS_CLINICOS.forEach((caseData, caseIndex) => {
+      CASE_TO_INDEX.set(caseData, caseIndex);
+      caseData.exemplos_tarefas_reabilitacao.forEach((task, taskIndex) => {
+        const key = `${caseIndex}:${taskIndex}`;
+        REHAB_TASK_TO_KEY.set(task, key);
+        REHAB_KEY_TO_TASK.set(key, task);
+      });
+    });
+
+    function normalizeTabProgress(tabKey, rawTabState) {
+      const termIds = Object.keys(MODELS[tabKey].termsBySlot);
+      const validTermIds = new Set(termIds);
+      const placements = createEmptyPlacements();
+      const usedTermIds = new Set();
+      const rawPlacements = rawTabState && typeof rawTabState === "object" ? rawTabState.placements : null;
+
+      SLOT_DEFS.forEach((slot) => {
+        const rawTermId = rawPlacements && typeof rawPlacements === "object"
+          ? rawPlacements[slot.id]
+          : null;
+        if (typeof rawTermId === "string" && validTermIds.has(rawTermId) && !usedTermIds.has(rawTermId)) {
+          placements[slot.id] = rawTermId;
+          usedTermIds.add(rawTermId);
+        }
+      });
+
+      const pool = [];
+      const rawPool = Array.isArray(rawTabState && rawTabState.pool)
+        ? rawTabState.pool
+        : [];
+
+      rawPool.forEach((termId) => {
+        if (typeof termId !== "string") {
+          return;
+        }
+        if (!validTermIds.has(termId) || usedTermIds.has(termId)) {
+          return;
+        }
+        usedTermIds.add(termId);
+        pool.push(termId);
+      });
+
+      termIds.forEach((termId) => {
+        if (!usedTermIds.has(termId)) {
+          usedTermIds.add(termId);
+          pool.push(termId);
+        }
+      });
+
+      let selectedTermId = rawTabState && typeof rawTabState.selectedTermId === "string"
+        ? rawTabState.selectedTermId
+        : null;
+      if (selectedTermId && !validTermIds.has(selectedTermId)) {
+        selectedTermId = null;
+      }
+      if (selectedTermId && !pool.includes(selectedTermId)) {
+        const isPlaced = Object.values(placements).includes(selectedTermId);
+        if (!isPlaced) {
+          selectedTermId = null;
+        }
+      }
+
+      return {
+        pool,
+        placements,
+        selectedTermId
+      };
+    }
+
+    function applyClinicoProgress(rawClinico) {
+      const cState = state.clinico;
+      cState.activeCaseIndex = 0;
+      cState.phase = 1;
+      cState.cases = [];
+      cState.score = 0;
+      cState.selectedSlotsForPhase1 = new Set();
+      cState.errorMsg = null;
+      cState.successMsg = null;
+      cState.phase2Term = null;
+      cState.rehabOptions = [];
+      cState.selectedRehabsForPhase3 = new Set();
+      cState.revealedPhase = null;
+
+      if (!rawClinico || typeof rawClinico !== "object") {
+        return;
+      }
+
+      const rawOrder = Array.isArray(rawClinico.caseOrder) ? rawClinico.caseOrder : [];
+      const seenCaseIndexes = new Set();
+      const orderedCaseIndexes = [];
+      rawOrder.forEach((index) => {
+        if (!Number.isInteger(index)) {
+          return;
+        }
+        if (index < 0 || index >= CASOS_CLINICOS.length || seenCaseIndexes.has(index)) {
+          return;
+        }
+        seenCaseIndexes.add(index);
+        orderedCaseIndexes.push(index);
+      });
+
+      if (orderedCaseIndexes.length === 0) {
+        return;
+      }
+
+      for (let i = 0; i < CASOS_CLINICOS.length; i += 1) {
+        if (!seenCaseIndexes.has(i)) {
+          orderedCaseIndexes.push(i);
+        }
+      }
+
+      cState.cases = orderedCaseIndexes.map((index) => CASOS_CLINICOS[index]);
+      if (!cState.cases.length) {
+        return;
+      }
+
+      if (Number.isInteger(rawClinico.activeCaseIndex)) {
+        cState.activeCaseIndex = Math.min(
+          Math.max(rawClinico.activeCaseIndex, 0),
+          cState.cases.length - 1
+        );
+      }
+
+      if ([1, 2, 3, 4].includes(rawClinico.phase)) {
+        cState.phase = rawClinico.phase;
+      }
+
+      if (Number.isFinite(rawClinico.score)) {
+        cState.score = Math.max(0, Math.floor(rawClinico.score));
+      }
+
+      const rawSelectedSlots = Array.isArray(rawClinico.selectedSlotsForPhase1)
+        ? rawClinico.selectedSlotsForPhase1
+        : [];
+      cState.selectedSlotsForPhase1 = new Set(
+        rawSelectedSlots.filter((slotId) => typeof slotId === "string" && SLOT_ID_SET.has(slotId))
+      );
+
+      if (typeof rawClinico.phase2Term === "string" && CLINICO_DIAGNOSES.has(rawClinico.phase2Term)) {
+        cState.phase2Term = rawClinico.phase2Term;
+      }
+
+      if ([1, 2, 3].includes(rawClinico.revealedPhase)) {
+        cState.revealedPhase = rawClinico.revealedPhase;
+      }
+
+      const rawRehabKeys = Array.isArray(rawClinico.rehabOptionKeys)
+        ? rawClinico.rehabOptionKeys
+        : [];
+      cState.rehabOptions = rawRehabKeys
+        .map((key) => REHAB_KEY_TO_TASK.get(key))
+        .filter((task) => Boolean(task));
+
+      const rawSelectedRehabs = Array.isArray(rawClinico.selectedRehabsForPhase3)
+        ? rawClinico.selectedRehabsForPhase3
+        : [];
+      cState.selectedRehabsForPhase3 = new Set(
+        rawSelectedRehabs.filter((idx) => Number.isInteger(idx) && idx >= 0 && idx < cState.rehabOptions.length)
+      );
+
+      cState.errorMsg = typeof rawClinico.errorMsg === "string" ? rawClinico.errorMsg : null;
+      cState.successMsg = typeof rawClinico.successMsg === "string" ? rawClinico.successMsg : null;
+    }
+
+    function createProgressSnapshot() {
+      const clinicoState = state.clinico;
+      const selectedSlotsForPhase1 = clinicoState.selectedSlotsForPhase1 instanceof Set
+        ? Array.from(clinicoState.selectedSlotsForPhase1)
+        : [];
+      const selectedRehabsForPhase3 = clinicoState.selectedRehabsForPhase3 instanceof Set
+        ? Array.from(clinicoState.selectedRehabsForPhase3)
+        : [];
+      const caseOrder = Array.isArray(clinicoState.cases)
+        ? clinicoState.cases
+            .map((caseItem) => CASE_TO_INDEX.get(caseItem))
+            .filter((index) => Number.isInteger(index))
+        : [];
+      const rehabOptionKeys = Array.isArray(clinicoState.rehabOptions)
+        ? clinicoState.rehabOptions
+            .map((task) => REHAB_TASK_TO_KEY.get(task))
+            .filter((key) => typeof key === "string")
+        : [];
+
+      const byTab = {};
+      TAB_KEYS.forEach((tabKey) => {
+        byTab[tabKey] = {
+          pool: Array.isArray(state.byTab[tabKey] && state.byTab[tabKey].pool)
+            ? [...state.byTab[tabKey].pool]
+            : [],
+          placements: state.byTab[tabKey] && state.byTab[tabKey].placements
+            ? { ...state.byTab[tabKey].placements }
+            : createEmptyPlacements(),
+          selectedTermId: state.byTab[tabKey] && typeof state.byTab[tabKey].selectedTermId === "string"
+            ? state.byTab[tabKey].selectedTermId
+            : null
+        };
+      });
+
+      const highlightSlotByTab = {};
+      TAB_KEYS.forEach((tabKey) => {
+        const highlight = state.highlightSlotByTab[tabKey];
+        highlightSlotByTab[tabKey] = SLOT_ID_SET.has(highlight) ? highlight : null;
+      });
+
+      return {
+        version: STORAGE_VERSION,
+        savedAt: Date.now(),
+        state: {
+          currentMode: state.currentMode,
+          currentTab: state.currentTab,
+          currentFocus: state.currentFocus,
+          byTab,
+          highlightSlotByTab,
+          clinico: {
+            caseOrder,
+            activeCaseIndex: clinicoState.activeCaseIndex,
+            phase: clinicoState.phase,
+            score: clinicoState.score,
+            selectedSlotsForPhase1,
+            phase2Term: clinicoState.phase2Term || null,
+            revealedPhase: clinicoState.revealedPhase || null,
+            rehabOptionKeys,
+            selectedRehabsForPhase3,
+            errorMsg: clinicoState.errorMsg || null,
+            successMsg: clinicoState.successMsg || null
+          }
+        }
+      };
+    }
+
+    function persistProgressNow() {
+      try {
+        const payload = createProgressSnapshot();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn("Nao foi possivel guardar progresso local.", error);
+      }
+    }
+
+    function schedulePersistProgress() {
+      if (persistTimeoutId !== null) {
+        clearTimeout(persistTimeoutId);
+      }
+      persistTimeoutId = setTimeout(() => {
+        persistTimeoutId = null;
+        persistProgressNow();
+      }, 160);
+    }
+
+    function loadPersistedProgress() {
+      let raw = null;
+      try {
+        raw = localStorage.getItem(STORAGE_KEY);
+      } catch (error) {
+        console.warn("Nao foi possivel ler progresso local.", error);
+        return false;
+      }
+      if (!raw) {
+        return false;
+      }
+
+      let payload = null;
+      try {
+        payload = JSON.parse(raw);
+      } catch (error) {
+        console.warn("Progresso local invalido. A iniciar novo progresso.", error);
+        return false;
+      }
+
+      if (!payload || typeof payload !== "object") {
+        return false;
+      }
+      if (payload.version !== STORAGE_VERSION || !payload.state || typeof payload.state !== "object") {
+        return false;
+      }
+
+      const persistedState = payload.state;
+      TAB_KEYS.forEach((tabKey) => {
+        const rawTabState = persistedState.byTab && persistedState.byTab[tabKey]
+          ? persistedState.byTab[tabKey]
+          : null;
+        state.byTab[tabKey] = normalizeTabProgress(tabKey, rawTabState);
+      });
+
+      TAB_KEYS.forEach((tabKey) => {
+        const rawHighlight = persistedState.highlightSlotByTab
+          ? persistedState.highlightSlotByTab[tabKey]
+          : null;
+        state.highlightSlotByTab[tabKey] = SLOT_ID_SET.has(rawHighlight) ? rawHighlight : null;
+      });
+
+      state.currentTab = TAB_KEYS.includes(persistedState.currentTab) ? persistedState.currentTab : "geral";
+      state.currentMode = MODE_KEYS.includes(persistedState.currentMode) ? persistedState.currentMode : "estudo";
+      state.currentFocus = FOCUS_ID_SET.has(persistedState.currentFocus) ? persistedState.currentFocus : "all";
+
+      applyClinicoProgress(persistedState.clinico);
+      if (state.currentMode === "clinico" && state.clinico.cases.length === 0) {
+        initClinicoMode();
+      }
+
+      return true;
+    }
 
     function shuffle(list) {
       const arr = [...list];
@@ -1381,7 +1719,7 @@
         btn.textContent = mode.label;
         btn.setAttribute("aria-pressed", String(state.currentMode === mode.id));
         btn.addEventListener("click", () => {
-          if (mode.id === "clinico" && state.currentMode !== "clinico") {
+          if (mode.id === "clinico" && state.currentMode !== "clinico" && state.clinico.cases.length === 0) {
              initClinicoMode();
           }
           state.currentMode = mode.id;
@@ -1740,6 +2078,30 @@
         updateFullscreenButton();
         syncLayout();
       }
+    }
+
+    async function handleExitApp() {
+      const shouldExit = confirm(
+        "Tem a certeza que quer sair da aplicacao? O progresso atual pode ser perdido."
+      );
+      if (!shouldExit) {
+        return;
+      }
+
+      if (currentFullscreenElement()) {
+        try {
+          await exitFullscreenMode();
+        } catch (error) {
+          console.warn("Nao foi possivel sair do modo de ecra inteiro antes de sair.", error);
+        }
+      }
+
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      window.location.assign("about:blank");
     }
 
     async function tryStartInFullscreen() {
@@ -2239,6 +2601,7 @@
       renderSidePanel();
       renderModel();
       syncLayout();
+      schedulePersistProgress();
     }
 
     shuffleBtn.addEventListener("click", () => {
@@ -2251,6 +2614,10 @@
 
     fullscreenBtn.addEventListener("click", () => {
       toggleFullscreenMode();
+    });
+
+    exitBtn.addEventListener("click", () => {
+      handleExitApp();
     });
 
     let resizeRafId = null;
@@ -2280,12 +2647,21 @@
         syncLayout();
       });
     }
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        persistProgressNow();
+      }
+    });
+    window.addEventListener("beforeunload", () => {
+      persistProgressNow();
+    });
 
     Object.keys(MODELS).forEach((tabKey) => {
       resetTab(tabKey);
       state.highlightSlotByTab[tabKey] = null;
     });
 
+    loadPersistedProgress();
     render();
     tryStartInFullscreen();
   </script>

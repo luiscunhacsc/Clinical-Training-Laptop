@@ -21,6 +21,7 @@ Tudo funciona num único ficheiro (`index.html`), ideal para uso em sala de aula
   - confirmação antes de revelar;
   - continuação sem pontuar na fase atual;
   - destaque visual da solução.
+- **Progresso guardado localmente (`localStorage`)** para retomar o estudo por etapas.
 - **Layout adaptativo para portátil** com diagrama prioritário no painel direito.
 - **Modo de ecrã inteiro** para máxima legibilidade.
 - **Sem backend, sem build, sem framework**.
